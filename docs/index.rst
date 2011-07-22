@@ -10,7 +10,6 @@ way.
    :maxdepth: 2
 
    overview
-   client-api
    modules
    doc-status
 
