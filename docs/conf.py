@@ -42,7 +42,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'RestPose'
+project = u'RestPose Python bindings'
 copyright = u'2011, Richard Boulton'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -166,7 +166,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'RestPosedoc'
+htmlhelp_basename = 'RestPosePydoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -180,7 +180,7 @@ htmlhelp_basename = 'RestPosedoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'RestPose.tex', u'RestPose Documentation',
+  ('index', 'RestPose.tex', u'RestPose Python bindings',
    u'Richard Boulton', 'manual'),
 ]
 
@@ -213,19 +213,25 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'restpose', u'RestPose Documentation',
+    ('index', 'restpose', u'RestPose Python bindings',
      [u'Richard Boulton'], 1)
 ]
 
+# Bibliographic Dublin Core info.
+epub_title = u'RestPose Python bindings'
+epub_author = u'Richard Boulton'
+epub_publisher = u'Richard Boulton'
+epub_copyright = u'2011, Richard Boulton'
 
-# Example configuration for intersphinx: refer to the Python standard library.
-#intersphinx_mapping = {'http://docs.python.org/': None}
+
 intersphinx_mapping = {
   'restpose': ('http://readthedocs.org/docs/restpose/en/latest/', None),
 }
 
+# Autodoc settings
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['members', 'undoc-members']
 
+# Cause todos to be displayed.
 todo_include_todos = True
