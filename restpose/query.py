@@ -9,6 +9,7 @@ Queries in RestPose.
 """
 
 import copy
+import six
 
 def _query_struct(query):
     """Get a structure to be sent to the server, from a Query.
@@ -251,7 +252,7 @@ class Searchable(object):
         """Get an item, or a slice of results.
 
         """
-        if not isinstance(key, (slice, int, long)):
+        if not isinstance(key, (slice, six.integer_types)):
             raise TypeError("keys must be slice objects, or integers")
 
         if isinstance(key, slice):
@@ -296,7 +297,7 @@ class Searchable(object):
             # assert that field is a string, because we may well want to allow
             # more complex types to be specified in future, and don't want to
             # risk breaking existing applications at that point.
-            assert isinstance(field, basestring)
+            assert isinstance(field, six.string_types)
             order_item['field'] = field
         
         if ascending is not None:
@@ -372,13 +373,14 @@ class QueryIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         try:
             result = self.query[self.index]
         except IndexError:
             raise StopIteration
         self.index += 1
         return result
+    next = __next__ # Python 2 compatibility
 
 
 class Query(Searchable):
@@ -730,18 +732,18 @@ class SearchResults(object):
         return self.items.__getitem__(key)
 
     def __str__(self):
-        result = u'SearchResults(offset=%d, size_requested=%d, ' \
-                 u'check_at_least=%d, ' \
-                 u'matches_lower_bound=%d, ' \
-                 u'matches_estimated=%d, ' \
-                 u'matches_upper_bound=%d, ' \
-                 u'items=[%s]' % (
+        result = six.u('SearchResults(offset=%d, size_requested=%d, '
+                       'check_at_least=%d, '
+                       'matches_lower_bound=%d, '
+                       'matches_estimated=%d, '
+                       'matches_upper_bound=%d, '
+                       'items=[%s]' % (
             self.offset, self.size_requested, self.check_at_least,
             self.matches_lower_bound,
             self.matches_estimated,
             self.matches_upper_bound,
-            u', '.join(unicode(item) for item in self.items),
-        )
+            six.u(', '.join(str(item) for item in self.items)),
+        ))
         if self.info:
-            result += u', info=%s' % unicode(self.info)
-        return result + u')'
+            result += six.u(', info=%s' % str(self.info))
+        return result + six.u(')')

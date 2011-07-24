@@ -1,2 +1,3 @@
 restkit>=3.2.3
 nose>=0.11
+six

@@ -11,12 +11,14 @@ by the RestPose server.
 
 """
 
-from version import __version__
+from .version import __version__
 import restkit
 try:
     import simplejson as json
 except ImportError:
     import json
+import six
+import sys
 
 class RestPoseResponse(restkit.Response):
     """A response from the RestPose server.
@@ -94,7 +96,7 @@ class RestPoseResource(restkit.Resource):
 
         if payload is not None:
             if not hasattr(payload, 'read') and \
-               not isinstance(payload, basestring):
+               not isinstance(payload, six.string_types):
                 payload = json.dumps(payload).encode('utf-8')
                 headers.setdefault('Content-Type', 'application/json')
 
@@ -102,7 +104,8 @@ class RestPoseResource(restkit.Resource):
             resp = restkit.Resource.request(self, method, path=path,
                                             payload=payload, headers=headers,
                                             **params)
-        except restkit.ResourceError, e:
+        except restkit.ResourceError:
+            e = sys.exc_info()[1] # Python 2/3 compatibility
             # Unpack any errors which are in JSON format.
             msg = getattr(e, 'msg', '')
             msgobj = None

@@ -9,6 +9,7 @@ Python objects.
 
 """
 
+import six
 from .resource import RestPoseResource
 from .query import Query, QueryAll, QueryNone, QueryField, QueryMeta, \
                    SearchResults
@@ -75,7 +76,7 @@ class Server(object):
         """
         resp = self._resource.get('/coll')
         resp.expect_status(200)
-        return resp.json.keys()
+        return list(resp.json.keys())
 
     def collection(self, coll_name):
         """Access to a collection.
@@ -142,7 +143,7 @@ class QueryTarget(object):
         This query type is available for "exact" and "id" field types.
 
         """
-        if isinstance(value, (basestring, int)):
+        if isinstance(value, (six.string_types, int)):
             value = (value,)
         return self.query_field(fieldname, 'is', value)
 

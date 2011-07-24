@@ -9,6 +9,7 @@ from ..resource import RestPoseResource
 from ..query import Query
 from .. import ResourceNotFound
 from restkit import ResourceError
+import sys
 
 class LogResource(RestPoseResource):
     """A simple resource which logs requests.
@@ -26,7 +27,8 @@ class LogResource(RestPoseResource):
         try:
             res = super(LogResource, self).request(method, path=path,
                                                    *args, **kwargs)
-        except ResourceError, e:
+        except ResourceError:
+            e = sys.exc_info()[1] # Python 2/3 compatibility
             self.log.append("%s: %s -> %d %s" % (method, path, e.status_int, e))
             raise
         self.log.append("%s: %s -> %d" % (method, path, int(res.status[:3])))
@@ -77,7 +79,7 @@ class SearchTest(RestPoseTestCase):
         self.assertEqual(results.matches_estimated, matches_estimated)
         self.assertEqual(results.matches_upper_bound, matches_upper_bound)
         self.assertEqual(len(results.items), len(items))
-        for i in xrange(len(items)):
+        for i in range(len(items)):
             self.assertEqual(results.items[i].rank, items[i].rank)
             self.assertEqual(results.items[i].data, items[i].data)
         self.assertEqual(results.info, info)
@@ -377,7 +379,7 @@ class LargeSearchTest(RestPoseTestCase):
         coll = Server().collection("test_coll")
         coll.delete()
         coll.checkpoint().wait()
-        for num in xrange(193):
+        for num in range(193):
             doc = cls.make_doc(num)
             coll.add_doc(doc, doc_type="num", doc_id=str(num))
         chk = coll.checkpoint().wait()

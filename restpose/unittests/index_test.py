@@ -5,6 +5,7 @@
 
 from .helpers import RestPoseTestCase
 from .. import Server, ResourceNotFound
+import sys
 
 class IndexTest(RestPoseTestCase):
 
@@ -39,7 +40,8 @@ class IndexTest(RestPoseTestCase):
         msg = None
         try:
             coll.get_doc("blurb", "1").data
-        except ResourceNotFound, e:
+        except ResourceNotFound:
+            e = sys.exc_info()[1] # Python 2/3 compatibility
             msg = e.msg
         self.assertEqual(msg, 'No collection of name "test_coll" exists')
 
@@ -68,7 +70,8 @@ class IndexTest(RestPoseTestCase):
         msg = None
         try:
             coll.get_doc("blurb", "1").data
-        except ResourceNotFound, e:
+        except ResourceNotFound:
+            e = sys.exc_info()[1] # Python 2/3 compatibility
             msg = e.msg
         self.assertEqual(msg, 'No document found of type "blurb" and id "1"')
 
@@ -78,14 +81,14 @@ class IndexTest(RestPoseTestCase):
         self.wait(coll)
         config = coll.config
         self.assertEqual(config['format'], 3)
-        self.assertEqual(config['types'].keys(), [])
+        self.assertEqual(list(config['types'].keys()), [])
 
         coll.config = {'types': {'foo': {
             'alpha': {'type': 'text'}
         }}}
         self.wait(coll, [{'msg': 'Setting collection config failed with ' +
                   'RestPose::InvalidValueError: Member format was missing'}])
-        self.assertEqual(config['types'].keys(), [])
+        self.assertEqual(list(config['types'].keys()), [])
         coll.config = {'format': 3,
             'types': {'foo': {
                 'alpha': {'type': 'text'}
@@ -94,6 +97,6 @@ class IndexTest(RestPoseTestCase):
         self.wait(coll)
         config = coll.config
         self.assertEqual(config['format'], 3)
-        self.assertEqual(config['types'].keys(), ['foo'])
+        self.assertEqual(list(config['types'].keys()), ['foo'])
         coll.delete()
         self.wait(coll)
