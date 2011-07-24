@@ -416,6 +416,7 @@ class Query(Searchable):
         """Return a query with the weight divided by a number.
 
         """
+        # Note: only used for python 2.x.
         return self.__mul__(1.0 / rhs)
 
     def __truediv__(self, rhs):

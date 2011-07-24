@@ -126,9 +126,12 @@ class QueryTest(TestCase):
                            'size': 20,
                           })
 
-        qm = operator.floordiv(q, 2)
-        qm.matches_estimated
-        self.check_target(target,
+        # operator.div doesn't exist in python 3, but we don't need to test the
+        # behaviour of / there, because it uses truediv anyway.
+        if hasattr(operator, 'div'):
+            qm = operator.div(q, 2)
+            qm.matches_estimated
+            self.check_target(target,
                           {
                            'query': {'scale': {'factor': 0.5,
                              'query': {'field': ['fieldname', 'is', '10']}}},
