@@ -126,7 +126,7 @@ class QueryTest(TestCase):
                            'size': 20,
                           })
 
-        qm = operator.div(q, 2)
+        qm = operator.floordiv(q, 2)
         qm.matches_estimated
         self.check_target(target,
                           {
