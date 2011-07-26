@@ -371,8 +371,8 @@ class LargeSearchTest(RestPoseTestCase):
     maxDiff = 10000
 
     @staticmethod
-    def make_doc(num):
-        return { 'num': [num], 'id': [str(num)], 'type': ['num'] }
+    def make_doc(num, type="num"):
+        return { 'num': [num], 'id': [str(num)], 'type': [type] }
 
     @classmethod
     def setup_class(cls):
@@ -382,6 +382,9 @@ class LargeSearchTest(RestPoseTestCase):
         for num in range(193):
             doc = cls.make_doc(num)
             coll.add_doc(doc, doc_type="num", doc_id=str(num))
+        for num in range(50):
+            doc = cls.make_doc(num, "other")
+            coll.add_doc(doc, doc_type="other", doc_id=str(num))
         chk = coll.checkpoint().wait()
         assert chk.total_errors == 0
 
@@ -392,7 +395,7 @@ class LargeSearchTest(RestPoseTestCase):
         """Check that setup put the database into the desired state.
 
         """
-        self.assertEqual(self.coll.status.get('doc_count'), 193)
+        self.assertEqual(self.coll.status.get('doc_count'), 243)
         gotdoc = self.coll.get_doc("num", "77")
         self.assertEqual(gotdoc.data, {
                                       'num': [77],
@@ -407,6 +410,13 @@ class LargeSearchTest(RestPoseTestCase):
                                       '#\\tNnum': {},
                                       })
         self.assertEqual(gotdoc.values, { '268435599': '\\xb8\\xd0' })
+
+        gotdoc = self.coll.get_doc("other", "17")
+        self.assertEqual(gotdoc.data, {
+                                      'num': [17],
+                                      'id': ['17'],
+                                      'type': ['other'],
+                                      })
 
     def test_query_empty(self):
         q = self.coll.doc_type("num").query_none()
