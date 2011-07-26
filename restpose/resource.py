@@ -33,17 +33,16 @@ class RestPoseResponse(restkit.Response):
         """Get the response body as JSON.
 
         :returns: The response body as a python object, decoded from JSON, if
-                  the response Content-Type was application/json.  Otherwise,
-                  return None.
+                  the response Content-Type was application/json.
         
-        :raises: an exception if the Content-Type is application/json, but the
-                 body is not valid JSON.
+        :raises: an exception if the Content-Type is not application/json, or
+                 the body is not valid JSON.
 
         """
         ctype = self.headers.get('Content-Type')
         if ctype == 'application/json':
             return json.loads(self.body_string())
-        return None
+        raise RestPoseError("Unexpected return content type: %s" % ctype)
 
     def expect_status(self, *expected):
         """Check that the status code is one of a set of expected codes.
@@ -56,6 +55,7 @@ class RestPoseResponse(restkit.Response):
         if self.status_int not in expected:
             raise RestPoseError("Unexpected return status: %d" %
                                 resp.status_int)
+        return self
 
 
 class RestPoseResource(restkit.Resource):
