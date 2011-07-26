@@ -75,6 +75,60 @@ class IndexTest(RestPoseTestCase):
             msg = e.msg
         self.assertEqual(msg, 'No document found of type "blurb" and id "1"')
 
+    def test_index_id_or_type_errors(self):
+        """Test that errors due to bad ID or type specifications when indexing
+        are reported correctly.
+
+        """
+        coll = Server().collection("test_coll")
+        coll.delete()
+        doc = { 'text': 'test doc', 'type': 'foo', 'id': '1' }
+        # All the following combinations should be successful.
+        coll.add_doc(doc)
+        doc['id'] = 2
+        coll.add_doc(doc, doc_type='foo')
+        doc['id'] = 3
+        coll.add_doc(doc, doc_id=3)
+        doc['id'] = 4
+        coll.add_doc(doc, doc_id="4")
+        doc['id'] = 5
+        coll.add_doc(doc, doc_type="foo", doc_id=5)
+        doc['id'] = "6"
+        coll.add_doc(doc, doc_type="foo", doc_id=6)
+
+        coll.add_doc(doc, doc_type='oof') # Error: mismatched types
+        coll.add_doc(doc, doc_id=2) # Error: mismatched ids
+        coll.doc_type('oof').add_doc(doc) # Error: mismatched types
+        coll.add_doc(doc, doc_type='oof', doc_id=2) # Error: mismatched types
+        coll.add_doc(doc, doc_id=2) # Error: mismatched ids
+        doc['id'] = [7,8]
+        coll.add_doc(doc)
+
+        chk = coll.checkpoint().wait()
+        self.assertEqual(chk.total_errors, 6)
+        self.assertEqual(len(chk.errors), 6)
+        self.assertEqual(chk.errors, [
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof'},
+            {'msg': 'Indexing error in field "id": "Document id supplied (\'2\') differs from that inside document (\'6\')."', 'doc_id': '2'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof', 'doc_id': '2'},
+            {'msg': 'Indexing error in field "id": "Document id supplied (\'2\') differs from that inside document (\'6\')."', 'doc_id': '2'},
+            {'msg': 'Indexing error in field "id": "Multiple ID values provided - must have only one"'},
+        ])
+
+        self.assertEqual(coll.get_doc('foo', '1').data,
+                         dict(text=['test doc'], type=['foo'], id=['1']))
+        self.assertEqual(coll.get_doc('foo', '2').data,
+                         dict(text=['test doc'], type=['foo'], id=[2]))
+        self.assertEqual(coll.get_doc('foo', '3').data,
+                         dict(text=['test doc'], type=['foo'], id=[3]))
+        self.assertEqual(coll.get_doc('foo', '4').data,
+                         dict(text=['test doc'], type=['foo'], id=[4]))
+        self.assertEqual(coll.get_doc('foo', '5').data,
+                         dict(text=['test doc'], type=['foo'], id=[5]))
+        self.assertEqual(coll.get_doc('foo', '6').data,
+                         dict(text=['test doc'], type=['foo'], id=["6"]))
+
     def test_custom_config(self):
         coll = Server().collection("test_coll")
         coll.delete()
