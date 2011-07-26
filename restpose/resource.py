@@ -84,9 +84,16 @@ class RestPoseResource(restkit.Resource):
     def request(self, method, path=None, payload=None, headers=None, **params):
         """Perform a request.
 
-        :param method: the HTTP method to use, as a string
-
-        .. todo:: document all params
+        :param method: the HTTP method to use, as a string.
+        :param path: The path to request.
+        :param payload: A payload to send as the request body; may be a
+               file-like object, or a string, or a structure to send encoded as
+               a JSON object.
+        :param headers: A dictionary of headers.  If not already set, Accept
+               and User-Agent headers will be added to this, and if there is a
+               JSON payload, the Content-Type will be set to application/json.
+        :param params_dict: A dictionary of parameters to add to the requst
+               URI.
 
         """
 
