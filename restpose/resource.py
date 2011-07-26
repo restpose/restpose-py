@@ -54,7 +54,7 @@ class RestPoseResponse(restkit.Response):
         """
         if self.status_int not in expected:
             raise RestPoseError("Unexpected return status: %d" %
-                                resp.status_int)
+                                self.status_int)
         return self
 
 
