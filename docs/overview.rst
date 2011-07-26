@@ -20,13 +20,13 @@ Indexing some documents is as simple as:
     coll.delete()
     coll.checkpoint().wait()
 
-.. doctest::
+.. testcode::
 
-    >>> import restpose
-    >>> server = restpose.Server('http://localhost:7777')
-    >>> doc = { 'text': 'Hello world', 'tag': 'A tag' }
-    >>> coll = server.collection("test_coll")
-    >>> coll.add_doc(doc, doc_type="blurb", doc_id=1)
+    import restpose
+    server = restpose.Server('http://localhost:7777')
+    doc = { 'text': 'Hello world', 'tag': 'A tag' }
+    coll = server.collection("test_coll")
+    coll.add_doc(doc, doc_type="blurb", doc_id=1)
 
 And then, searching those documents can be done by:
 
@@ -57,8 +57,10 @@ on port 7777 by default, and for the rest of this tutorial we'll assume that
 it's running on the same machine as you're using the python client on, and is
 running on the default port.
 
-    >>> from restpose import Server
-    >>> server = Server('http://localhost:7777')
+.. testcode::
+
+    from restpose import Server
+    server = Server('http://localhost:7777')
 
 Adding a document
 -----------------
@@ -79,9 +81,11 @@ documents.  It is not currently possible to search transparently across
 multiple collections.  Collections should be used when you have independent
 projects, but wish to share the resources of a server across them.
 
-    >>> doc = { 'text': 'Hello world', 'tag': 'A tag' }
-    >>> coll = server.collection("test_coll")
-    >>> coll.add_doc(doc, doc_type="blurb", doc_id=1)
+.. testcode::
+
+    doc = { 'text': 'Hello world', 'tag': 'A tag' }
+    coll = server.collection("test_coll")
+    coll.add_doc(doc, doc_type="blurb", doc_id=1)
 
 If all goes well, within a short time (usually a fraction of a second), the
 document will have been indexed.  However, using the above calls the changes
