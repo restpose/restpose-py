@@ -60,23 +60,20 @@ class Server(object):
     def status(self):
         """Get server status.
 
-        Returns a dictionary.
-
-        .. todo:: Document the contents of the response.
+        Returns a dictionary holding the status as returned from the server.
+        See the server documentation for details.
 
         """
-        return self._resource.get('/status').json
+        return self._resource.get('/status').expect_status(200).json
 
     @property
     def collections(self):
         """Get a list of existing collections.
 
-        Returns a list of collections
+        Returns a list of collection names (as strings).
 
         """
-        resp = self._resource.get('/coll')
-        resp.expect_status(200)
-        return list(resp.json.keys())
+        return list(self._resource.get('/coll').expect_status(200).json.keys())
 
     def collection(self, coll_name):
         """Access to a collection.
@@ -261,7 +258,7 @@ class Document(object):
         self._raw = None
 
     def _fetch(self):
-        self._raw = self._resource.get(self._path).json
+        self._raw = self._resource.get(self._path).expect_status(200).json
         self._data = self._raw.get('data', {})
         self._terms = self._raw.get('terms', {})
         self._values = self._raw.get('values', {})
@@ -296,17 +293,25 @@ class DocumentType(QueryTarget):
         """
         path = self._basepath
         use_put = True
+
         if doc_id is None:
             use_put = False
         else:
             path += '/id/%s' % doc_id
+
         if use_put:
-            resp = self._resource.put(path, payload=doc).json
+            resp = self._resource.put(path, payload=doc)
         else:
-            resp = self._resource.post(path, payload=doc).json
-        if resp.status_int != 202:
-            raise RestPoseError("Unexpected return status from add_doc: %d" %
-                                resp.status_int)
+            resp = self._resource.post(path, payload=doc)
+
+        return resp.expect_status(202)
+
+    def delete_doc(self, doc_type, doc_id):
+        """Delete a document from the collection.
+
+        """
+        path = '%s/type/%s/id/%s' % (self._basepath, doc_type, doc_id)
+        return self._resource.delete(path).expect_status(202)
 
     def get_doc(self, doc_id):
         return Document(None, self, doc_id)
@@ -325,21 +330,20 @@ class Collection(QueryTarget):
         """The status of the collection.
 
         """
-        return self._resource.get(self._basepath).json
+        return self._resource.get(self._basepath).expect_status(200).json
 
     @property
     def config(self):
         """The configuration of the collection.
 
         """
-        return self._resource.get(self._basepath + '/config').json
+        return self._resource.get(self._basepath + '/config') \
+              .expect_status(200).json
 
     @config.setter
     def config(self, value):
-        resp = self._resource.put(self._basepath + '/config', payload=value)
-        if resp.status_int != 202:
-            raise RestPoseError("Unexpected return status from config: %d" %
-                                resp.status_int)
+        self._resource.put(self._basepath + '/config', payload=value) \
+            .expect_status(202)
 
     def add_doc(self, doc, doc_type=None, doc_id=None):
         """Add a document to the collection.
@@ -362,17 +366,15 @@ class Collection(QueryTarget):
             resp = self._resource.put(path, payload=doc)
         else:
             resp = self._resource.post(path, payload=doc)
-        if resp.status_int != 202:
-            raise RestPoseError("Unexpected return status from add_doc: %d" %
-                                resp.status_int)
 
+        return resp.expect_status(202)
 
     def delete_doc(self, doc_type, doc_id):
         """Delete a document from the collection.
 
         """
         path = '%s/type/%s/id/%s' % (self._basepath, doc_type, doc_id)
-        return self._resource.delete(path).json
+        return self._resource.delete(path).expect_status(202)
 
     def get_doc(self, doc_type, doc_id):
         """Get a document from the collection.
@@ -396,14 +398,15 @@ class Collection(QueryTarget):
             params_dict['commit'] = '1'
         else:
             params_dict['commit'] = '0'
-        return CheckPoint(self, self._resource.post(path,
-                            params_dict=params_dict).json)
+        return CheckPoint(self, self._resource
+                          .post(path, params_dict=params_dict)
+                          .expect_status(201))
 
     def delete(self):
         """Delete the entire collection.
 
         """
-        self._resource.delete(self._basepath)
+        return self._resource.delete(self._basepath).expect_status(202)
 
 
 class CheckPoint(object):
@@ -411,7 +414,7 @@ class CheckPoint(object):
 
     """
     def __init__(self, collection, chkpt_response):
-        self._check_id = chkpt_response.get('checkid')
+        self._check_id = chkpt_response.json.get('checkid')
         self._basepath = collection._basepath + '/checkpoint/' + self._check_id
         self._resource = collection._resource
 
@@ -432,12 +435,14 @@ class CheckPoint(object):
     def _refresh(self):
         """Contact the server, and get the status of the checkpoint.
 
-        If the checkpoint has been reached or expired, this doesn't contact the
-        server, since the checkpoint should no longer change at this point.
+        If the checkpoint referred to by this Checkpoint instance has
+        previously been found to have been reached or expired, this doesn't
+        contact the server, since the checkpoint should no longer change at
+        this point.
 
         """
         if self._raw is None:
-            resp = self._resource.get(self._basepath).json
+            resp = self._resource.get(self._basepath).expect_status(200).json
             if resp is None:
                 self._raw = 'expired'
             elif resp.get('reached', False):
