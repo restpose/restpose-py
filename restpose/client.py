@@ -57,6 +57,7 @@ class Server(object):
         else:
             self._resource = self._resource_class(uri, **client_opts)
 
+    @property
     def status(self):
         """Get server status.
 
