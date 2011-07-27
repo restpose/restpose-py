@@ -158,6 +158,16 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
+    def test_field_is_many(self):
+        """Test a field_is query with many values."""
+        q = self.coll.doc_type("blurb").field_is('tag', ['A tag', 'A bag'])
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=self.expected_items_single)
+
+        q = self.coll.doc_type("blurb").field_is('tag', ['A flag', 'A bag'])
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=[])
+
     def test_field_exists(self):
         q = self.coll.doc_type("blurb").field_exists()
         results = self.coll.doc_type("blurb").search(q)
