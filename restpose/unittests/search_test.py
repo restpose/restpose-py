@@ -342,12 +342,23 @@ class SearchTest(RestPoseTestCase):
                          'GET: /coll/test_coll/checkpoint/')
         self.assertEqual(logres.log[2][-6:], '-> 200')
 
-        logres.log[:] = []
+        # Try making the server using resource_class instead of instance
+        coll = Server(resource_class=LogResource).collection("test_coll")
+        logres = coll._resource
         doc = coll.doc_type('blurb').get_doc('2')
         self.assertRaises(ResourceNotFound, getattr, doc, 'data')
         self.assertEqual(logres.log,
                          ['GET: /coll/test_coll/type/blurb/id/2 -> ' +
                           '404 No document found of type "blurb" and id "2"'])
+
+    def test_server_status(self):
+        """Test the result of getting the server status."""
+        server = Server()
+        s = server.status
+        self.assertTrue('tasks' in s)
+        self.assertTrue('search' in s['tasks'])
+        # No reason to test further, since this is just the structure returned
+        # by the server.
 
     def test_search_on_unknown_type(self):
         """Test that a search on an unknown document type returns exactly the
