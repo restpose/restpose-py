@@ -480,8 +480,6 @@ class CheckPoint(object):
 
         """
         self._refresh()
-        if self._raw is None:
-            return None
         return self._raw.get('errors', [])
 
     @property
@@ -498,8 +496,6 @@ class CheckPoint(object):
 
         """
         self._refresh()
-        if self._raw is None:
-            return None
         return self._raw.get('total_errors', 0)
 
     def wait(self):
