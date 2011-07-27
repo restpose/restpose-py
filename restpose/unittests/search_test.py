@@ -7,7 +7,7 @@ from .helpers import RestPoseTestCase
 from .. import query, Server
 from ..resource import RestPoseResource
 from ..query import Query
-from .. import ResourceNotFound
+from .. import ResourceNotFound, RequestFailed
 from restkit import ResourceError
 import sys
 
@@ -403,6 +403,61 @@ class SearchTest(RestPoseTestCase):
         q = self.coll.doc_type("blurb").query_all()
         self.assertEqual(q[0].data, self.expected_item_data)
 
+    def test_field_text(self):
+        """Test a text search."""
+        q = self.coll.doc_type("blurb").field_text("text", "Hello world")
+        self.assertEqual(q[0].data, self.expected_item_data)
+
+        # Default operator is phrase, so adding a word in the middle produces
+        # no results.
+        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world")
+        self.assertRaises(IndexError, q.__getitem__, 0)
+
+        # Try with server-default for the operator.
+        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
+                                                   op=None)
+        self.assertRaises(IndexError, q.__getitem__, 0)
+
+        # Try with operator of or instead.
+        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
+                                                   op="or")
+        self.assertEqual(q[0].data, self.expected_item_data)
+
+        # Try with an invalid operator
+        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
+                                                   op="invalid")
+        self.assertRaises(RequestFailed, q.__getitem__, 0)
+
+        # Try with a larger window
+# FIXME - disabled, because window sizes don't work on field_text searches,
+# currently.
+#        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
+#                                                   window=3)
+#        self.assertEqual(q[0].data, self.expected_item_data)
+
+    def test_field_parse(self):
+        """Test a parsed field search."""
+        t = self.coll.doc_type("blurb")
+        q = t.field_parse("text", "Hello world")
+        self.assertEqual(q[0].data, self.expected_item_data)
+
+        # Default operator is and, so adding a word in the middle produces
+        # no results.
+        q = t.field_parse("text", "Hello cold world")
+        self.assertRaises(IndexError, q.__getitem__, 0)
+
+        # Try with server-default for the operator.
+        q = t.field_parse("text", "Hello cold world", op=None)
+        self.assertRaises(IndexError, q.__getitem__, 0)
+
+        # Try with operator of or instead.
+        q = t.field_parse("text", "Hello cold world", op="or")
+        self.assertEqual(q[0].data, self.expected_item_data)
+
+        # Try with an invalid operator
+        q = t.field_parse("text", "Hello cold world", op="invalid")
+        self.assertRaises(RequestFailed, q.__getitem__, 0)
+
 
 class LargeSearchTest(RestPoseTestCase):
     """Tests of handling results of searches which return lots of results.
@@ -539,3 +594,11 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(qs[192 - 15].data, self.make_doc(192))
         self.assertRaises(IndexError, qs.__getitem__, 193 - 15)
         self.assertEqual(len(qs), 193 - 15)
+
+    def test_query_range(self):
+        q = self.coll.doc_type("num").field_range('num', 46, 50)
+        self.assertEqual(len(q), 5)
+        q = q.order_by('num')
+        self.assertEqual(q[0].data, self.make_doc(46))
+        self.assertEqual(q[4].data, self.make_doc(50))
+        self.assertRaises(IndexError, q.__getitem__, 5)
