@@ -540,6 +540,7 @@ class LargeSearchTest(RestPoseTestCase):
 
         """
         q = self.coll.query_all()
+        self.assertEqual(q.total_docs, 243)
         # The order of items with the same num is undefined, so just check the
         # nums.
         q1 = q.order_by('num') # default order is ascending
@@ -571,6 +572,7 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(q[192].data, self.make_doc(192))
         self.assertRaises(IndexError, q.__getitem__, 193)
         self.assertEqual(len(q), 193)
+        self.assertEqual(q.total_docs, 193)
 
         qs = q[10:20]
         self.assertEqual(qs[0].data, self.make_doc(10))
