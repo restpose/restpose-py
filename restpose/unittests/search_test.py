@@ -134,6 +134,25 @@ class SearchTest(RestPoseTestCase):
                                       })
         self.assertEqual(gotdoc.values, {})
 
+    def test_getdoc(self):
+        """Test that getting bits of a document works.
+
+        """
+        # Get the same document 3 times, and trigger lazy fetching by a
+        # different method each time.
+        d1 = self.coll.get_doc("blurb", "1")
+        d1.data
+        d2 = self.coll.get_doc("blurb", "1")
+        d2.terms
+        d3 = self.coll.get_doc("blurb", "1")
+        d3.values
+        self.assertEqual(d1.data, d2.data)
+        self.assertEqual(d1.data, d3.data)
+        self.assertEqual(d1.terms, d2.terms)
+        self.assertEqual(d1.terms, d3.terms)
+        self.assertEqual(d1.values, d2.values)
+        self.assertEqual(d1.values, d3.values)
+
     def test_field_is(self):
         q = self.coll.doc_type("blurb").field_is('tag', 'A tag')
         results = self.coll.doc_type("blurb").search(q)
@@ -419,10 +438,12 @@ class LargeSearchTest(RestPoseTestCase):
                                       })
 
     def test_query_empty(self):
+        q = self.coll.query_none()
+        self.assertRaises(IndexError, q.__getitem__, 0)
         q = self.coll.doc_type("num").query_none()
         self.assertRaises(IndexError, q.__getitem__, 0)
 
-    def test_query_order_by_field(self):
+    def test_query_order_by_field_coll(self):
         """Test setting the result order to be by a field.
 
         """
@@ -436,6 +457,34 @@ class LargeSearchTest(RestPoseTestCase):
         q1 = q.order_by('num', False) 
         self.assertEqual(q1[0].data, self.make_doc(192))
         self.assertEqual(q1[192].data, self.make_doc(0))
+        self.assertRaises(IndexError, q1.__getitem__, 193)
+
+    def test_query_order_by_field(self):
+        """Test setting the result order to be by a field.
+
+        """
+        q = self.coll.query_all()
+        # The order of items with the same num is undefined, so just check the
+        # nums.
+        q1 = q.order_by('num') # default order is ascending
+        self.assertEqual(q1[0].data['num'], [0])
+        self.assertEqual(q1[1].data['num'], [0])
+        self.assertEqual(q1[98].data['num'], [49])
+        self.assertEqual(q1[99].data['num'], [49])
+        self.assertEqual(q1[100].data['num'], [50])
+        self.assertEqual(q1[101].data['num'], [51])
+        self.assertEqual(q1[242].data, self.make_doc(192))
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+        q1 = q.order_by('num', True) 
+        self.assertEqual(q1[0].data['num'], [0])
+        self.assertEqual(q1[1].data['num'], [0])
+        self.assertEqual(q1[242].data, self.make_doc(192))
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+        q1 = q.order_by('num', False) 
+        self.assertEqual(q1[0].data, self.make_doc(192))
+        self.assertEqual(q1[1].data, self.make_doc(191))
+        self.assertEqual(q1[242].data['num'], [0])
+        self.assertRaises(IndexError, q1.__getitem__, 243)
 
     def test_query_all(self):
         q = self.coll.doc_type("num").query_all().order_by('num')
