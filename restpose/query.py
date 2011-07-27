@@ -444,7 +444,7 @@ class Query(Searchable):
         filter query, but uses only the weights from the original query.
 
         """
-        return QueryAnd((self, other * 0), target=self._target)
+        return QueryFilter((self, other), target=self._target)
 
     def and_maybe(self, other):
         """Return the results of this query, with additional weights from
@@ -546,6 +546,14 @@ class QueryNot(CombinedQuery):
 
     """
     _op = "not"
+
+
+class QueryFilter(CombinedQuery):
+    """A query which matches the documents matched by all the subqueries, but
+    only returns weights from the first subquery.
+
+    """
+    _op = "filter"
 
 
 class QueryAndMaybe(CombinedQuery):
