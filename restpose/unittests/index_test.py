@@ -96,25 +96,35 @@ class IndexTest(RestPoseTestCase):
         doc['id'] = "6"
         coll.add_doc(doc, doc_type="foo", doc_id=6)
 
-        coll.add_doc(doc, doc_type='oof') # Error: mismatched types
-        coll.add_doc(doc, doc_id=2) # Error: mismatched ids
-        coll.doc_type('oof').add_doc(doc) # Error: mismatched types
-        coll.add_doc(doc, doc_type='oof', doc_id=2) # Error: mismatched types
-        coll.add_doc(doc, doc_id=2) # Error: mismatched ids
+        coll.add_doc(doc, doc_type='oof1') # Error: mismatched types
+        coll.add_doc(doc, doc_id=12) # Error: mismatched ids
+        coll.doc_type('oof2').add_doc(doc) # Error: mismatched types
+        coll.add_doc(doc, doc_type='oof3', doc_id=13) # Error: mismatched types
+        coll.doc_type('oof4').add_doc(doc, doc_id=14) # Error: mismatched types
+        coll.doc_type('foo').add_doc(doc, doc_id=15) # Error: mismatched ids
+        coll.add_doc(doc, doc_id=16) # Error: mismatched ids
         doc['id'] = [7,8]
         coll.add_doc(doc)
+        del doc['type']
+        coll.add_doc(doc) # Error: no type specified
 
         chk = coll.checkpoint().wait()
-        self.assertEqual(chk.total_errors, 6)
-        self.assertEqual(len(chk.errors), 6)
-        self.assertEqual(chk.errors, [
-            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof'},
-            {'msg': 'Indexing error in field "id": "Document id supplied (\'2\') differs from that inside document (\'6\')."', 'doc_id': '2'},
-            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof'},
-            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof', 'doc_id': '2'},
-            {'msg': 'Indexing error in field "id": "Document id supplied (\'2\') differs from that inside document (\'6\')."', 'doc_id': '2'},
+        self.assertEqual(chk.total_errors, 9)
+        self.assertEqual(len(chk.errors), 9)
+        def mkkey(x): return x.get('doc_id', '') + x.get('doc_type', '') + x.get('msg')
+        expected_errors = [
+            {'msg': 'Indexing error in field "type": "No document type supplied or stored in document."'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof1'},
+            {'msg': 'Indexing error in field "id": "Document id supplied (\'12\') differs from that inside document (\'6\')."', 'doc_id': '12'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof2'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof3', 'doc_id': '13'},
+            {'msg': 'Indexing error in field "type": "Document type supplied differs from that inside document."', 'doc_type': 'oof4', 'doc_id': '14'},
+            {'msg': 'Indexing error in field "id": "Document id supplied (\'15\') differs from that inside document (\'6\')."', 'doc_type': 'foo', 'doc_id': '15'},
+            {'msg': 'Indexing error in field "id": "Document id supplied (\'16\') differs from that inside document (\'6\')."', 'doc_id': '16'},
             {'msg': 'Indexing error in field "id": "Multiple ID values provided - must have only one"'},
-        ])
+        ]
+        self.assertEqual(sorted(chk.errors, key=mkkey),
+                         sorted(expected_errors, key=mkkey))
 
         self.assertEqual(coll.get_doc('foo', '1').data,
                          dict(text=['test doc'], type=['foo'], id=['1']))
