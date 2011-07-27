@@ -400,7 +400,8 @@ class Collection(QueryTarget):
             params_dict['commit'] = '0'
         return CheckPoint(self, self._resource
                           .post(path, params_dict=params_dict)
-                          .expect_status(201))
+                          .expect_status(201)
+                          .json.get('checkid'))
 
     def delete(self):
         """Delete the entire collection.
@@ -413,8 +414,8 @@ class CheckPoint(object):
     """A checkpoint, used to check the progress of indexing.
 
     """
-    def __init__(self, collection, chkpt_response):
-        self._check_id = chkpt_response.json.get('checkid')
+    def __init__(self, collection, check_id):
+        self._check_id = check_id
         self._basepath = collection._basepath + '/checkpoint/' + self._check_id
         self._resource = collection._resource
 
