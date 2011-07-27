@@ -136,9 +136,12 @@ class QueryTarget(object):
         return QueryMeta(querytype, value, target=self)
 
     def field_is(self, fieldname, value):
-        """Create a query for an exact value in a named field.
+        """Create a query for an exact value or values in a named field.
 
         This query type is available for "exact" and "id" field types.
+
+        :param fieldname: The field to search.
+        :param value: The value to search for, or a list of values to search for.
 
         """
         if isinstance(value, (six.string_types, int)):
