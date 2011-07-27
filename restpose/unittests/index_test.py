@@ -4,7 +4,8 @@
 # license.  See the COPYING file for more information.
 
 from .helpers import RestPoseTestCase
-from .. import Server, ResourceNotFound
+from .. import Server, CheckPointExpiredError, ResourceNotFound
+from ..client import CheckPoint
 import sys
 
 class IndexTest(RestPoseTestCase):
@@ -138,6 +139,21 @@ class IndexTest(RestPoseTestCase):
                          dict(text=['test doc'], type=['foo'], id=[5]))
         self.assertEqual(coll.get_doc('foo', '6').data,
                          dict(text=['test doc'], type=['foo'], id=["6"]))
+
+    def test_checkpoint(self):
+        coll = Server().collection("test_coll")
+
+        # Check that accessing the id works.
+        c = coll.checkpoint(commit=False)
+        id = c.check_id
+        self.assertTrue(len(id) > 10)
+
+        c = CheckPoint(coll, 'fake_checkid')
+        self.assertEqual(c.check_id, 'fake_checkid')
+        self.assertRaises(CheckPointExpiredError, getattr, c, 'reached')
+        self.assertRaises(CheckPointExpiredError, getattr, c, 'errors')
+        self.assertRaises(CheckPointExpiredError, getattr, c, 'total_errors')
+        self.assertRaises(CheckPointExpiredError, c.wait)
 
     def test_custom_config(self):
         coll = Server().collection("test_coll")
