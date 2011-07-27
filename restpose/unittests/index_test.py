@@ -52,6 +52,8 @@ class IndexTest(RestPoseTestCase):
         """
         coll = Server().collection("test_coll")
         coll.delete()
+
+        # Check deleting a document via the collection.
         doc = { 'text': 'Hello world', 'tag': 'A tag', 'cat': "greeting",
                 'empty': "" }
         coll.add_doc(doc, doc_type="blurb", doc_id="1")
@@ -71,6 +73,30 @@ class IndexTest(RestPoseTestCase):
         msg = None
         try:
             coll.get_doc("blurb", "1").data
+        except ResourceNotFound:
+            e = sys.exc_info()[1] # Python 2/3 compatibility
+            msg = e.msg
+        self.assertEqual(msg, 'No document found of type "blurb" and id "1"')
+
+        # Check deleting a document via the type object.
+        t = coll.doc_type("blurb")
+        t.add_doc(doc, doc_id="1")
+        self.wait(coll)
+        self.assertEqual(t.get_doc("1").data,
+                         dict(
+                              cat = ['greeting'],
+                              empty = [''],
+                              id = ['1'],
+                              tag = ['A tag'],
+                              text = ['Hello world'],
+                              type = ['blurb'],
+                             ))
+
+        t.delete_doc(doc_id="1")
+        self.wait(coll)
+        msg = None
+        try:
+            t.get_doc("1").data
         except ResourceNotFound:
             e = sys.exc_info()[1] # Python 2/3 compatibility
             msg = e.msg

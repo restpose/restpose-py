@@ -306,11 +306,11 @@ class DocumentType(QueryTarget):
 
         return resp.expect_status(202)
 
-    def delete_doc(self, doc_type, doc_id):
-        """Delete a document from the collection.
+    def delete_doc(self, doc_id):
+        """Delete a document with this type from the collection.
 
         """
-        path = '%s/type/%s/id/%s' % (self._basepath, doc_type, doc_id)
+        path = '%s/id/%s' % (self._basepath, doc_id)
         return self._resource.delete(path).expect_status(202)
 
     def get_doc(self, doc_id):
