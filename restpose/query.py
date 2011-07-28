@@ -399,7 +399,7 @@ class QueryIterator(object):
 class Query(Searchable):
     """Base class of all queries.
 
-    All query subclasses should have a property called "query", containing the
+    All query subclasses should have a property called "_query", containing the
     query as a structure ready to be converted to JSON and sent to the server.
 
     """
