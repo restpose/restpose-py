@@ -94,10 +94,115 @@ class Server(object):
         return Collection(self, coll_name)
 
 
+class FieldQueryFactory(object):
+    """Object for creating searches on a field.
+
+    """
+
+    def __init__(self, target=None):
+
+        #: The target that will be used when creating Query objects.  Defaults
+        #: to None.
+        self.target = target
+
+    def __call__(self, fieldname):
+        """Create a FieldQuerySource for the given fieldname.
+
+        This is mainly indended for use for fieldnames which are stored in a
+        parameter, or which are reserved or invalid Python identifiers.
+
+        """
+        return FieldQuerySource(fieldname, self.target)
+
+    def __getattr__(self, fieldname):
+        """Get a FieldQuerySource for the given fieldname.
+
+        The FieldQuerySource has various operators used to build queries.
+
+        """
+        return FieldQuerySource(fieldname, self.target)
+
+
+class FieldQuerySource(object):
+    """An object which generates queries for a specific field.
+
+    """
+    def __init__(self, fieldname, target):
+        """
+        :param fieldname: The name of the field to generate queries for.
+        :param target: The target to generate queries pointing to.
+
+        """
+        self.fieldname = fieldname
+        self.target = target
+
+    def matches(self, value):
+        """Create a query for an exact value, or one of a list of values.
+
+        This query type is available for "exact" and "id" field types.
+
+        :param value: The value to search for, or a list of values to search
+                      for.
+
+        """
+        return QueryField(self.fieldname, 'is', value, target=self.target)
+
+    def range(self, begin, end):
+        """Create a query for field values in a given range.
+
+        Matches documents in which the stored value is in the specified range,
+        including both the begin and end values.
+
+        :param begin: The start of the range.
+        :param end: The end of the range.
+
+        """
+        return QueryField(self.fieldname, 'range', (begin, end))
+
+    def text(self, text, op="phrase", window=None):
+        """Create a query for a piece of text in the field.
+
+        :param text: The text to search for.  If empty, this query will
+               match no results.
+        :param op: The operator to use when searching.  One of "or", "and",
+               "phrase" (ordered proximity), "near" (unordered proximity).
+               Default="phrase".
+        :param window: Only relevant if op is "phrase" or "near". Window size
+               in words within which the words in the text need to occur for a
+               document to match; None=length of text. Integer or None.
+               Default=None
+
+        """
+        value = dict(text=text)
+        if op is not None:
+            value['op'] = op
+        if window is not None:
+            value['window'] = window
+        return QueryField(self.fieldname, 'text', value)
+
+    def parse(self, text, op="and"):
+        """Parse a structured query.
+
+        :param fieldname: The field to search within.
+        :param text: Text to search for.  If empty, this query will match no
+               results.
+        :param op: The default operator to use when searching.  One of "or",
+               "and".  Default="and".
+
+        """
+        value = dict(text=text)
+        if op is not None:
+            value['op'] = op
+        return self.query_field(self.fieldname, 'parse', value)
+
+F = FieldQueryFactory()
+
 class QueryTarget(object):
     """An object which can be used to make and run queries.
 
     """
+    def __init__(self):
+        self.F = FieldQueryFactory(target=self)
 
     def query_all(self):
         """Create a query which matches all documents."""
@@ -230,6 +335,17 @@ class QueryTarget(object):
         """
         return self.query_meta('error', (fieldname,))
 
+    def find(self, *args, **kwargs):
+        """Apply a Query to this QueryTarget.
+
+        .. todo:: Support more argument options, and document them.
+
+        """
+        if isinstance(args[0], Query):
+            return args[0].set_target(self)
+        raise ValueError("Invalid arguments supplied to QueryTarget.find()")
+
+
     def search(self, search):
         """Perform a search.
 
@@ -288,6 +404,7 @@ class Document(object):
 
 class DocumentType(QueryTarget):
     def __init__(self, collection, doc_type):
+        super(DocumentType, self).__init__()
         self._basepath = collection._basepath + '/type/' + doc_type
         self._resource = collection._resource
 
@@ -323,6 +440,7 @@ class DocumentType(QueryTarget):
 
 class Collection(QueryTarget):
     def __init__(self, server, coll_name):
+        super(Collection, self).__init__()
         self._basepath = '/coll/' + coll_name
         self._resource = server._resource
 
