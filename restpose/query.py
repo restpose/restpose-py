@@ -63,6 +63,19 @@ class Searchable(object):
         """
         self._target = target
 
+    def set_target(self, target):
+        """Return a searchable, with the target set.
+
+        If the target was already set to the same value, returns self.
+        Otherwise, returns a copy of target.
+        
+        """
+        if self._target is target:
+            return self
+        result = copy.copy(self)
+        result._target = target
+        return result
+
     def _build_search(self, offset=None, size=None, check_at_least=None):
         """Build the search structure to send to the server.
 
