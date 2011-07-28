@@ -4,10 +4,9 @@
 # license.  See the COPYING file for more information.
 
 from .helpers import RestPoseTestCase
-from .. import query, Server
+from ..query import SearchResult
 from ..resource import RestPoseResource
-from ..query import Query
-from .. import ResourceNotFound, RequestFailed
+from .. import Server, F, ResourceNotFound, RequestFailed
 from restkit import ResourceError
 import sys
 
@@ -54,7 +53,7 @@ class SearchTest(RestPoseTestCase):
 
     # Expected items for tests which return a single result
     expected_items_single = [
-        query.SearchResult(rank=0, data=expected_item_data),
+        SearchResult(rank=0, data=expected_item_data),
     ]
 
     def check_results(self, results, offset=0, size_requested=None, check_at_least=0,
