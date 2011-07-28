@@ -6,7 +6,7 @@
 
 """
 
-from .client import Server
+from .client import Server, F
 from .errors import RestPoseError, CheckPointExpiredError
 from .version import dev_release, version_info, __version__
 
