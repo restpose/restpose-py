@@ -6,7 +6,9 @@
 from .helpers import RestPoseTestCase
 from ..query import SearchResult
 from ..resource import RestPoseResource
-from .. import Server, Field, AnyField, ResourceNotFound, RequestFailed
+from .. import Server, Field, AnyField, \
+ Searchable, Query, \
+ ResourceNotFound, RequestFailed
 from restkit import ResourceError
 import sys
 
@@ -71,6 +73,8 @@ class SearchTest(RestPoseTestCase):
         if matches_upper_bound is None:
             matches_upper_bound = len(items)
 
+        if isinstance(results, Searchable):
+            results = results.search()
         self.assertEqual(results.offset, offset)
         self.assertEqual(results.size_requested, size_requested)
         self.assertEqual(results.check_at_least, check_at_least)
@@ -86,13 +90,22 @@ class SearchTest(RestPoseTestCase):
     @classmethod
     def setup_class(cls):
         doc = { 'text': 'Hello world', 'tag': 'A tag', 'cat': "greeting",
-                'empty': "" }
+                'empty': "", 'test': 'too long' * 10 }
         coll = Server().collection("test_coll")
         coll.delete()
         coll.checkpoint().wait()
+
+        # Add a "test" field which errors if too long, to test error searches.
+        c = coll.config
+        c['default_type']['patterns'].insert(0,
+            ['test',
+             {'group': 'T', 'max_length': 10, 'too_long_action': 'error',
+              'type': 'exact'}])
+        coll.config = c
+
         coll.add_doc(doc, doc_type="blurb", doc_id="1")
         chk = coll.checkpoint().wait()
-        assert chk.total_errors == 0
+        assert chk.total_errors == 1
 
     def setUp(self):
         self.coll = Server().collection("test_coll")
@@ -114,15 +127,19 @@ class SearchTest(RestPoseTestCase):
         self.assertEqual(gotdoc.terms, {
                                       '\\tblurb\\t1': {},
                                       '!\\tblurb': {},
+                                      '#\\tE': {},
+                                      '#\\tEtest': {},
                                       '#\\tFcat': {},
                                       '#\\tFempty': {},
                                       '#\\tFtag': {},
+                                      '#\\tFtest': {},
                                       '#\\tFtext': {},
                                       '#\\tM': {},
                                       '#\\tMempty': {},
                                       '#\\tN': {},
                                       '#\\tNcat': {},
                                       '#\\tNtag': {},
+                                      '#\\tNtest': {},
                                       '#\\tNtext': {},
                                       'Zt\\thello': {'wdf': 1},
                                       'Zt\\tworld': {'wdf': 1},
@@ -243,8 +260,13 @@ class SearchTest(RestPoseTestCase):
         self.check_results(results, items=[])
 
     def test_field_has_error(self):
-        q = self.coll.doc_type("blurb").any_field.has_error()
-        results = self.coll.doc_type("blurb").search(q)
+        results = self.coll.doc_type("blurb").any_field.has_error()
+        self.check_results(results, items=self.expected_items_single)
+
+        results = self.coll.fields('test').has_error()
+        self.check_results(results, items=self.expected_items_single)
+
+        results = self.coll.fields.text.has_error()
         self.check_results(results, items=[])
 
     def test_query_all(self):
