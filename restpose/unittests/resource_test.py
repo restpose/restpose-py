@@ -15,8 +15,8 @@ class ResourceTest(RestPoseTestCase):
     def setUp(self):
         self.r = RestPoseResource('http://127.0.0.1:7777/')
 
-    def test_resource_errors(self):
-        """Check error handling in the resource
+    def test_bad_response(self):
+        """Check error handling when response isn't in expected format.
 
         """
         resp = self.r.get('/')

@@ -123,12 +123,9 @@ class RestPoseResource(restkit.Resource):
             if e.response and msg:
                 ctype = e.response.headers.get('Content-Type')
                 if ctype == 'application/json':
-                    try:
-                        msgobj = json.loads(msg)
-                    except ValueError:
-                        pass
+                    msgobj = json.loads(msg)
             if msgobj is not None:
-                e.msg = msgobj['err']
+                e.msg = msgobj.get('err', '')
             e.msgobj = msgobj
             raise
 
