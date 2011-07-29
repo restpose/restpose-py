@@ -16,7 +16,7 @@ from .errors import RestPoseError
 import restkit
 try:
     import simplejson as json
-except ImportError:
+except ImportError: # pragma: no cover
     import json
 import six
 import sys
