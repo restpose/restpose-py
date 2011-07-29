@@ -12,6 +12,7 @@ by the RestPose server.
 """
 
 from .version import __version__
+from .errors import RestPoseError
 import restkit
 try:
     import simplejson as json
@@ -25,7 +26,7 @@ class RestPoseResponse(restkit.Response):
 
     In addition to the properties exposed by :mod:`restkit:restkit.Response`, this
     exposes a `json` property, to decode JSON responses automatically.
-    
+
     """
 
     @property
@@ -34,9 +35,11 @@ class RestPoseResponse(restkit.Response):
 
         :returns: The response body as a python object, decoded from JSON, if
                   the response Content-Type was application/json.
-        
+
         :raises: an exception if the Content-Type is not application/json, or
                  the body is not valid JSON.
+
+        :raises: :exc:`RestPoseError` if the status code returned is not one of the supplied status codes.
 
         """
         ctype = self.headers.get('Content-Type')
@@ -49,7 +52,8 @@ class RestPoseResponse(restkit.Response):
 
         :param expected: The expected status codes.
 
-        :raises: :exc:`RestPoseError` if the status code returned is not one of the supplied status codes.
+        :raises: :exc:`RestPoseError` if the status code returned is not one of
+                 the supplied status codes.
 
         """
         if self.status_int not in expected:
@@ -127,5 +131,5 @@ class RestPoseResource(restkit.Resource):
                 e.msg = msgobj['err']
             e.msgobj = msgobj
             raise
-            
+
         return resp
