@@ -13,6 +13,7 @@ import six
 from .resource import RestPoseResource
 from .query import Query, QueryAll, QueryNone, QueryField, QueryMeta, \
                    SearchResults
+import query
 from .errors import RestPoseError, CheckPointExpiredError
 
 class Server(object):
@@ -100,7 +101,10 @@ class FieldQueryFactory(object):
     """
 
     def __init__(self, target=None):
+        """
+        :param target: The target to pass to the Query objects created.
 
+        """
         #: The target that will be used when creating Query objects.  Defaults
         #: to None.
         self.target = target
@@ -108,7 +112,7 @@ class FieldQueryFactory(object):
     def __call__(self, fieldname):
         """Create a FieldQuerySource for the given fieldname.
 
-        This is mainly indended for use for fieldnames which are stored in a
+        This is mainly intended for use for fieldnames which are stored in a
         parameter, or which are reserved or invalid Python identifiers.
 
         """
@@ -136,28 +140,45 @@ class FieldQuerySource(object):
         self.fieldname = fieldname
         self.target = target
 
-    def matches(self, value):
-        """Create a query for an exact value, or one of a list of values.
+    def is_in(self, values):
+        """Create a query for fields which exactly match the given values.
 
-        This query type is available for "exact" and "id" field types.
+        A document will match if at least one of the stored values for the
+        field exactly matches one or more of the given values.
 
-        :param value: The value to search for, or a list of values to search
-                      for.
+        This query type is available for "exact", "id" and "cat" field types.
+
+        :param value: A container holding the values to search for.
 
         """
         return QueryField(self.fieldname, 'is', value, target=self.target)
 
+    def __eq__(self, value):
+        """Create a query for fields which exactly match the given value.
+
+        Matches documents in which the supplied value exactly matches the
+        stored value.
+
+        This query type is available for "exact", "id" and "cat" field types.
+
+        :param value: The value to search for.
+
+        """
+        return QueryField(self.fieldname, 'is', (value,), target=self.target)
+    equals = __eq__
+
     def range(self, begin, end):
         """Create a query for field values in a given range.
 
-        Matches documents in which the stored value is in the specified range,
-        including both the begin and end values.
+        Matches documents in which one of the stored values in the field are in
+        the specified range, including both the begin and end values.
 
         :param begin: The start of the range.
         :param end: The end of the range.
 
         """
-        return QueryField(self.fieldname, 'range', (begin, end))
+        return QueryField(self.fieldname, 'range', (begin, end),
+                          target=self.target)
 
     def text(self, text, op="phrase", window=None):
         """Create a query for a piece of text in the field.
@@ -178,10 +199,10 @@ class FieldQuerySource(object):
             value['op'] = op
         if window is not None:
             value['window'] = window
-        return QueryField(self.fieldname, 'text', value)
+        return QueryField(self.fieldname, 'text', value, target=self.target)
 
     def parse(self, text, op="and"):
-        """Parse a structured query.
+        """Parse a structured query, searching the field.
 
         :param fieldname: The field to search within.
         :param text: Text to search for.  If empty, this query will match no
@@ -193,7 +214,33 @@ class FieldQuerySource(object):
         value = dict(text=text)
         if op is not None:
             value['op'] = op
-        return self.query_field(self.fieldname, 'parse', value)
+        return QueryField(self.fieldname, 'parse', value, target=self.target)
+
+    def exists(self):
+        """Search for documents in which the field exists.
+
+        """
+        return QueryMeta('exists', (self.fieldname,), target=self.target)
+
+    def nonempty(self):
+        """Search for documents in which the field has a non-empty value.
+
+        """
+        return QueryMeta('nonempty', (self.fieldname,), target=self.target)
+
+    def empty(self):
+        """Search for documents in which the field has an empty value.
+
+        """
+        return QueryMeta('empty', (fieldname,), target=self.target)
+
+    def has_error(self):
+        """Search for documents in which the field produced errors when
+        parsing.
+
+        """
+        return QueryMeta('error', (fieldname,), target=self.target)
+
 
 F = FieldQueryFactory()
 
@@ -202,7 +249,7 @@ class QueryTarget(object):
 
     """
     def __init__(self):
-        self.F = FieldQueryFactory(target=self)
+        self.fields = FieldQueryFactory(target=self)
 
     def query_all(self):
         """Create a query which matches all documents."""
@@ -335,16 +382,15 @@ class QueryTarget(object):
         """
         return self.query_meta('error', (fieldname,))
 
-    def find(self, *args, **kwargs):
+    def find(self, q):
         """Apply a Query to this QueryTarget.
 
-        .. todo:: Support more argument options, and document them.
+        :param q: A Query object which will have the target applied to it.
 
         """
-        if isinstance(args[0], Query):
-            return args[0].set_target(self)
+        if isinstance(q, query.Query):
+            return q.set_target(self)
         raise ValueError("Invalid arguments supplied to QueryTarget.find()")
-
 
     def search(self, search):
         """Perform a search.
