@@ -457,16 +457,16 @@ class Query(Searchable):
         return self.__mul__(1.0 / rhs)
 
     def __and__(self, other):
-        return QueryAnd((self, other), target=self._target)
+        return And((self, other), target=self._target)
 
     def __or__(self, other):
-        return QueryOr((self, other), target=self._target)
+        return Or((self, other), target=self._target)
 
     def __xor__(self, other):
-        return QueryXor((self, other), target=self._target)
+        return Xor((self, other), target=self._target)
 
     def __sub__(self, other):
-        return QueryNot((self, other), target=self._target)
+        return Not((self, other), target=self._target)
 
     def filter(self, other):
         """Return the results of this query filtered by another query.
@@ -475,7 +475,7 @@ class Query(Searchable):
         filter query, but uses only the weights from the original query.
 
         """
-        return QueryFilter((self, other), target=self._target)
+        return Filter((self, other), target=self._target)
 
     def and_maybe(self, other):
         """Return the results of this query, with additional weights from
@@ -485,7 +485,7 @@ class Query(Searchable):
         adds the weight from corresponding matches to the other query.
 
         """
-        return QueryAndMaybe((self, other), target=self._target)
+        return AndMaybe((self, other), target=self._target)
 
 
 class QueryField(Query):
@@ -541,7 +541,7 @@ class CombinedQuery(Query):
         self._query = {self._op: list(_query_struct(query)
                                       for query in queries)}
 
-class QueryAnd(CombinedQuery):
+class And(CombinedQuery):
     """A query which matches only the documents matched by all subqueries.
 
     The weights are the sum of the weights in the subqueries.
@@ -550,7 +550,7 @@ class QueryAnd(CombinedQuery):
     _op = "and"
 
 
-class QueryOr(CombinedQuery):
+class Or(CombinedQuery):
     """A query which matches the documents matched by any subquery.
 
     The weights are the sum of the weights in the subqueries which match.
@@ -559,7 +559,7 @@ class QueryOr(CombinedQuery):
     _op = "or"
 
 
-class QueryXor(CombinedQuery):
+class Xor(CombinedQuery):
     """A query which matches the documents matched by an odd number of
     subqueries.
 
@@ -569,7 +569,7 @@ class QueryXor(CombinedQuery):
     _op = "xor"
 
 
-class QueryNot(CombinedQuery):
+class Not(CombinedQuery):
     """A query which matches the documents matched by the first subquery, but
     not any of the other subqueries.
 
@@ -579,7 +579,7 @@ class QueryNot(CombinedQuery):
     _op = "not"
 
 
-class QueryFilter(CombinedQuery):
+class Filter(CombinedQuery):
     """A query which matches the documents matched by all the subqueries, but
     only returns weights from the first subquery.
 
@@ -587,7 +587,7 @@ class QueryFilter(CombinedQuery):
     _op = "filter"
 
 
-class QueryAndMaybe(CombinedQuery):
+class AndMaybe(CombinedQuery):
     """A query which matches the documents matched by the first subquery, but
     adds additional weights from the other subqueries.
 
