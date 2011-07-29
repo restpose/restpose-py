@@ -597,7 +597,18 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(len(qs), 193 - 15)
 
     def test_query_range(self):
-        q = self.coll.doc_type("num").field_range('num', 46, 50)
+        dt = self.coll.doc_type('num')
+        q = dt.fields.num.range(46, 50)
+        q1 = dt.fields('num').range(46, 50)
+        self.assertEqual(q._query, q1._query)
+        self.assertEqual(q._target, q1._target)
+        q1 = dt.find(F.num.range(46, 50))
+        self.assertEqual(q._query, q1._query)
+        self.assertEqual(q._target, q1._target)
+        q1 = dt.find(F('num').range(46, 50))
+        self.assertEqual(q._query, q1._query)
+        self.assertEqual(q._target, q1._target)
+
         self.assertEqual(len(q), 5)
         q = q.order_by('num')
         self.assertEqual(q[0].data, self.make_doc(46))
@@ -605,7 +616,7 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertRaises(IndexError, q.__getitem__, 5)
 
     def test_query_iteration(self):
-        q = self.coll.doc_type("num").field_range('num', 46, 50) \
+        q = self.coll.doc_type("num").fields.num.range(46, 50) \
                 .order_by('num')
         self.assertEqual(list(item.data['num'][0] for item in q),
                          [46, 47, 48, 49, 50])
@@ -613,7 +624,10 @@ class LargeSearchTest(RestPoseTestCase):
                          [46, 47, 48, 49, 50])
 
     def test_query_filter(self):
-        q = self.coll.field_range('num', 46, 50)
+        q = self.coll.fields('num').range(46, 50)
         self.assertEqual(len(q), 9) # num has 46-50, other has 46-49
-        q = q.filter(self.coll.field_is('type', 'num'))
-        self.assertEqual(len(q), 5)
+        q1 = q.filter(F.type.equals('num'))
+        q2 = q.filter(self.coll.find(F.type.equals('num')))
+        self.assertEqual(q1._query, q2._query)
+        self.assertEqual(q1._target, q2._target)
+        self.assertEqual(len(q1), 5)
