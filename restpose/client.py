@@ -131,9 +131,10 @@ class FieldQuerySource(object):
     """An object which generates queries for a specific field.
 
     """
-    def __init__(self, fieldname, target):
+    def __init__(self, fieldname, target=None):
         """
-        :param fieldname: The name of the field to generate queries for.
+        :param fieldname: The name of the field to generate queries for.  If
+               set to None, will generate queries across all fields.
         :param target: The target to generate queries pointing to.
 
         """
@@ -232,24 +233,29 @@ class FieldQuerySource(object):
         """Search for documents in which the field has an empty value.
 
         """
-        return QueryMeta('empty', (fieldname,), target=self.target)
+        return QueryMeta('empty', (self.fieldname,), target=self.target)
 
     def has_error(self):
         """Search for documents in which the field produced errors when
         parsing.
 
         """
-        return QueryMeta('error', (fieldname,), target=self.target)
+        return QueryMeta('error', (self.fieldname,), target=self.target)
 
 
-F = FieldQueryFactory()
+Field = FieldQueryFactory()
+AnyField = FieldQuerySource(fieldname=None)
 
 class QueryTarget(object):
     """An object which can be used to make and run queries.
 
     """
     def __init__(self):
+        #: Factory for field-specific queries.
         self.fields = FieldQueryFactory(target=self)
+
+        #: Pseudo field for making queries across all fields.
+        self.any_field = FieldQuerySource(fieldname=None, target=self)
 
     def all(self):
         """Create a query which matches all documents."""
@@ -272,20 +278,6 @@ class QueryTarget(object):
 
         """
         return QueryField(fieldname, querytype, value, target=self)
-
-    def query_meta(self, querytype, value):
-        """Create a query based on the meta information about field presence.
-
-        See the documentation of the restpose query types for the possible
-        values of querytype, and the corresponding structure which should be
-        passed in value.
-
-        Usually, rather than calling this method directly, it will be more
-        convenient to call one of the field_*() methods to construct the
-        appropriate query, which use this method internally.
-
-        """
-        return QueryMeta(querytype, value, target=self)
 
     def field_is(self, fieldname, value):
         """Create a query for an exact value or values in a named field.
@@ -344,43 +336,6 @@ class QueryTarget(object):
         if op is not None:
             value['op'] = op
         return self.query_field(fieldname, 'parse', value)
-
-    def field_exists(self, fieldname=None):
-        """Search for documents in which a given field exists.
-
-        If the fieldname supplied is None, searches for documents in which any
-        field exists.
-
-        """
-        return self.query_meta('exists', (fieldname,))
-
-    def field_nonempty(self, fieldname=None):
-        """Search for documents in which a given field has a non-empty value.
-
-        If the fieldname supplied is None, searches for documents in which any
-        field has a non-empty value.
-
-        """
-        return self.query_meta('nonempty', (fieldname,))
-
-    def field_empty(self, fieldname=None):
-        """Search for documents in which a given field has an empty value.
-
-        If the fieldname supplied is None, searches for documents in which any
-        field has an empty value.
-
-        """
-        return self.query_meta('empty', (fieldname,))
-
-    def field_has_error(self, fieldname=None):
-        """Search for documents in which a given field produced errors when
-        parsing.
-
-        If the fieldname supplied is None, searches for documents in which any
-        field produced errors when parsing.
-
-        """
-        return self.query_meta('error', (fieldname,))
 
     def find(self, q):
         """Apply a Query to this QueryTarget.

@@ -6,7 +6,7 @@
 from .helpers import RestPoseTestCase
 from ..query import SearchResult
 from ..resource import RestPoseResource
-from .. import Server, F, ResourceNotFound, RequestFailed
+from .. import Server, Field, AnyField, ResourceNotFound, RequestFailed
 from restkit import ResourceError
 import sys
 
@@ -168,82 +168,82 @@ class SearchTest(RestPoseTestCase):
         self.check_results(results, items=[])
 
     def test_field_exists(self):
-        q = self.coll.doc_type("blurb").field_exists()
+        q = self.coll.doc_type("blurb").any_field.exists()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_exists('tag')
+        q = self.coll.doc_type("blurb").fields.tag.exists()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_exists('id')
+        q = self.coll.doc_type("blurb").fields('id').exists()
         # ID field is not stored, so searching for its existence returns
         # nothing.
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_exists('type')
+        q = self.coll.doc_type("blurb").find(Field.type.exists())
         # Type field is not stored, so searching for its existence returns
         # nothing.
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_exists('missing')
+        q = self.coll.doc_type("blurb").fields.missing.exists()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
     def test_field_empty(self):
-        q = self.coll.doc_type("blurb").field_empty()
+        q = self.coll.doc_type("blurb").find(AnyField.empty())
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_empty('empty')
+        q = self.coll.doc_type("blurb").fields.empty.empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_empty('text')
+        q = self.coll.doc_type("blurb").fields('text').empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_empty('id')
+        q = self.coll.doc_type("blurb").find(Field.id.empty())
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_empty('type')
+        q = self.coll.doc_type("blurb").find(Field('type').empty())
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_empty('missing')
+        q = self.coll.doc_type("blurb").fields.missing.empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
     def test_field_nonempty(self):
-        q = self.coll.doc_type("blurb").field_nonempty()
+        q = self.coll.doc_type("blurb").any_field.nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_nonempty('empty')
+        q = self.coll.doc_type("blurb").fields.empty.nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_nonempty('text')
+        q = self.coll.doc_type("blurb").fields('text').nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_nonempty('id')
+        q = self.coll.doc_type("blurb").find(Field.id.nonempty())
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_nonempty('type')
+        q = self.coll.doc_type("blurb").find(Field('type').nonempty())
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").field_nonempty('missing')
+        q = self.coll.doc_type("blurb").fields.missing.nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
     def test_field_has_error(self):
-        q = self.coll.doc_type("blurb").field_has_error()
+        q = self.coll.doc_type("blurb").any_field.has_error()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -602,10 +602,10 @@ class LargeSearchTest(RestPoseTestCase):
         q1 = dt.fields('num').range(46, 50)
         self.assertEqual(q._query, q1._query)
         self.assertEqual(q._target, q1._target)
-        q1 = dt.find(F.num.range(46, 50))
+        q1 = dt.find(Field.num.range(46, 50))
         self.assertEqual(q._query, q1._query)
         self.assertEqual(q._target, q1._target)
-        q1 = dt.find(F('num').range(46, 50))
+        q1 = dt.find(Field('num').range(46, 50))
         self.assertEqual(q._query, q1._query)
         self.assertEqual(q._target, q1._target)
 
@@ -626,8 +626,8 @@ class LargeSearchTest(RestPoseTestCase):
     def test_query_filter(self):
         q = self.coll.fields('num').range(46, 50)
         self.assertEqual(len(q), 9) # num has 46-50, other has 46-49
-        q1 = q.filter(F.type.equals('num'))
-        q2 = q.filter(self.coll.find(F.type.equals('num')))
+        q1 = q.filter(Field.type.equals('num'))
+        q2 = q.filter(self.coll.find(Field.type.equals('num')))
         self.assertEqual(q1._query, q2._query)
         self.assertEqual(q1._target, q2._target)
         self.assertEqual(len(q1), 5)
