@@ -248,17 +248,17 @@ class SearchTest(RestPoseTestCase):
         self.check_results(results, items=[])
 
     def test_query_all(self):
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
     def test_query_none(self):
-        q = self.coll.doc_type("blurb").query_none()
+        q = self.coll.doc_type("blurb").none()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
     def test_calc_cooccur(self):
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q.calc_cooccur('t'))
         self.assertEqual(self.coll.status.get('doc_count'), 1)
         self.check_results(results, check_at_least=1,
@@ -272,7 +272,7 @@ class SearchTest(RestPoseTestCase):
                            }])
 
     def test_calc_occur(self):
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q.calc_occur('t'))
         self.assertEqual(self.coll.status.get('doc_count'), 1)
         self.check_results(results, check_at_least=1,
@@ -297,7 +297,7 @@ class SearchTest(RestPoseTestCase):
         """Test adjusting the configured offset for a search.
 
         """
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q[1:])
         self.check_results(results, offset=1,
                            matches_lower_bound=1,
@@ -312,7 +312,7 @@ class SearchTest(RestPoseTestCase):
         """Test adjusting the configured size for a search.
 
         """
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q[:1])
         self.check_results(results, size_requested=1,
                            items=self.expected_items_single)
@@ -324,7 +324,7 @@ class SearchTest(RestPoseTestCase):
         """Test adjusting the configured check_at_least value for a search.
 
         """
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         results = self.coll.doc_type("blurb").search(q.check_at_least(1))
         self.check_results(results, check_at_least=1,
                            items=self.expected_items_single)
@@ -380,8 +380,8 @@ class SearchTest(RestPoseTestCase):
         self.wait(coll)
         empty_type = coll.doc_type("empty_type")
         missing_type = coll.doc_type("missing_type")
-        empty_query = empty_type.query_all()
-        missing_query = missing_type.query_all()
+        empty_query = empty_type.all()
+        missing_query = missing_type.all()
 
         self.assertEqual(empty_type.search(empty_query[7:18]
                                            .check_at_least(3))._raw,
@@ -399,7 +399,7 @@ class SearchTest(RestPoseTestCase):
         """Test subscript on a query.
 
         """
-        q = self.coll.doc_type("blurb").query_all()
+        q = self.coll.doc_type("blurb").all()
         self.assertEqual(q[0].data, self.expected_item_data)
 
     def test_field_text(self):
@@ -513,16 +513,16 @@ class LargeSearchTest(RestPoseTestCase):
                                       })
 
     def test_query_empty(self):
-        q = self.coll.query_none()
+        q = self.coll.none()
         self.assertRaises(IndexError, q.__getitem__, 0)
-        q = self.coll.doc_type("num").query_none()
+        q = self.coll.doc_type("num").none()
         self.assertRaises(IndexError, q.__getitem__, 0)
 
     def test_query_order_by_field_coll(self):
         """Test setting the result order to be by a field.
 
         """
-        q = self.coll.doc_type("num").query_all()
+        q = self.coll.doc_type("num").all()
         q1 = q.order_by('num') # default order is ascending
         self.assertEqual(q1[0].data, self.make_doc(0))
         self.assertEqual(q1[192].data, self.make_doc(192))
@@ -538,7 +538,7 @@ class LargeSearchTest(RestPoseTestCase):
         """Test setting the result order to be by a field.
 
         """
-        q = self.coll.query_all()
+        q = self.coll.all()
         self.assertEqual(q.total_docs, 243)
         # The order of items with the same num is undefined, so just check the
         # nums.
@@ -563,7 +563,7 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertRaises(IndexError, q1.__getitem__, 243)
 
     def test_query_all(self):
-        q = self.coll.doc_type("num").query_all().order_by('num')
+        q = self.coll.doc_type("num").all().order_by('num')
 
         self.assertEqual(q[0].data, self.make_doc(0))
         self.assertEqual(q[1].data, self.make_doc(1))

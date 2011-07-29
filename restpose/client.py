@@ -251,11 +251,11 @@ class QueryTarget(object):
     def __init__(self):
         self.fields = FieldQueryFactory(target=self)
 
-    def query_all(self):
+    def all(self):
         """Create a query which matches all documents."""
         return QueryAll(target=self)
 
-    def query_none(self):
+    def none(self):
         """Create a query which matches no documents."""
         return QueryNone(target=self)
 
