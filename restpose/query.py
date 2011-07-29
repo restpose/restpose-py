@@ -89,6 +89,8 @@ class Searchable(object):
         :returns: The results of the search.
 
         """
+        if self._target is None:
+            raise ValueError("Target of search not set")
         self._results = self._target.search(self._build_search())
         return self._results
 
