@@ -32,10 +32,10 @@ def _target_from_queries(queries):
     """
     target = None
     for query in queries:
-        if query.target is not None:
-            if target is not None and target is not query.target:
+        if query._target is not None:
+            if target is not None and target is not query._target:
                 raise ValueError("Queries have inconsistent targets.")
-            target = query.target
+            target = query._target
     return target
 
 
@@ -457,16 +457,16 @@ class Query(Searchable):
         return self.__mul__(1.0 / rhs)
 
     def __and__(self, other):
-        return And((self, other), target=self._target)
+        return And(self, other, target=self._target)
 
     def __or__(self, other):
-        return Or((self, other), target=self._target)
+        return Or(self, other, target=self._target)
 
     def __xor__(self, other):
-        return Xor((self, other), target=self._target)
+        return Xor(self, other, target=self._target)
 
     def __sub__(self, other):
-        return Not((self, other), target=self._target)
+        return AndNot(self, other, target=self._target)
 
     def filter(self, other):
         """Return the results of this query filtered by another query.
@@ -475,7 +475,7 @@ class Query(Searchable):
         filter query, but uses only the weights from the original query.
 
         """
-        return Filter((self, other), target=self._target)
+        return Filter(self, other, target=self._target)
 
     def and_maybe(self, other):
         """Return the results of this query, with additional weights from
@@ -485,7 +485,7 @@ class Query(Searchable):
         adds the weight from corresponding matches to the other query.
 
         """
-        return AndMaybe((self, other), target=self._target)
+        return AndMaybe(self, other, target=self._target)
 
 
 class QueryField(Query):
@@ -533,7 +533,15 @@ class CombinedQuery(Query):
     Subclasses must define self._op, the operator to use to combine queries.
 
     """
-    def __init__(self, queries, target=None):
+    def __init__(self, *queries, **kwargs):
+        target = kwargs.get('target', None)
+        try:
+            del kwargs['target']
+        except KeyError:
+            pass
+        if len(kwargs) != 0:
+            raise TypeError("Unexpected keyword arguments: %s" %
+                            ', '.join(kwargs.keys()))
         if target is None:
             queries = tuple(queries) # Handle queries being an iterator.
             target = _target_from_queries(queries)
@@ -569,14 +577,14 @@ class Xor(CombinedQuery):
     _op = "xor"
 
 
-class Not(CombinedQuery):
+class AndNot(CombinedQuery):
     """A query which matches the documents matched by the first subquery, but
     not any of the other subqueries.
 
     The weights returned are the weights in the first subquery.
 
     """
-    _op = "not"
+    _op = "and_not"
 
 
 class Filter(CombinedQuery):

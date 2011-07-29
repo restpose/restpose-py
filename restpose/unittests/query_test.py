@@ -4,7 +4,7 @@
 # license.  See the COPYING file for more information.
 
 from unittest import TestCase
-from .. import query
+from .. import query, And, Or, Xor, AndNot, Filter, AndMaybe
 import operator
 
 class DummyTarget(object):
@@ -23,6 +23,7 @@ class DummyTarget(object):
 
 
 class QueryTest(TestCase):
+    maxDiff = 10000
     def check_target(self, target, expected_last):
         self.assertEqual(target.count, 1)
         self.assertEqual(target.last, expected_last)
@@ -56,6 +57,8 @@ class QueryTest(TestCase):
                           })
 
         q2 = query.QueryField("fieldname", "is", "11", target)
+        q3 = query.QueryField("fieldname", "is", "12", target)
+
         q1 = qm | q2
         q1.matches_estimated
         self.check_target(target,
@@ -65,6 +68,20 @@ class QueryTest(TestCase):
                                'query': {'field': ['fieldname', 'is', '10']}
                              }},
                              {'field': ['fieldname', 'is', '11']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = Or(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'or': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
                            ]},
                            'size': 20,
                           })
@@ -82,6 +99,20 @@ class QueryTest(TestCase):
                            'size': 20,
                           })
 
+        q1 = And(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'and': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
+                           ]},
+                           'size': 20,
+                          })
+
         q1 = qm ^ q2
         q1.matches_estimated
         self.check_target(target,
@@ -95,15 +126,97 @@ class QueryTest(TestCase):
                            'size': 20,
                           })
 
+        q1 = Xor(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'xor': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
+                           ]},
+                           'size': 20,
+                          })
+
         q1 = qm - q2
         q1.matches_estimated
         self.check_target(target,
                           {
-                           'query': {'not': [
+                           'query': {'and_not': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
                              }},
                              {'field': ['fieldname', 'is', '11']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = AndNot(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'and_not': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = qm.filter(q2)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'filter': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = Filter(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'filter': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = qm.and_maybe(q2)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'and_maybe': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']}
+                           ]},
+                           'size': 20,
+                          })
+
+        q1 = AndMaybe(qm, q2, q3)
+        q1.matches_estimated
+        self.check_target(target,
+                          {
+                           'query': {'and_maybe': [
+                             {'scale': {'factor': 3.14,
+                               'query': {'field': ['fieldname', 'is', '10']}
+                             }},
+                             {'field': ['fieldname', 'is', '11']},
+                             {'field': ['fieldname', 'is', '12']}
                            ]},
                            'size': 20,
                           })
