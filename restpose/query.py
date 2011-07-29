@@ -76,6 +76,22 @@ class Searchable(object):
         result._target = target
         return result
 
+    def search(self):
+        """Explicitly force a search for this query to be performed.
+
+        This ignores any cached results, and always makes a call to the server.
+
+        The query should usually be sliced before calling this method.  If the
+        slice does not specify an endpoint, the server will use its internal
+        limit on the number of results, so only a small number of results will
+        be returned unless a larger number is explictly set by slicing.
+
+        :returns: The results of the search.
+
+        """
+        self._results = self._target.search(self._build_search())
+        return self._results
+
     def _build_search(self, offset=None, size=None, check_at_least=None):
         """Build the search structure to send to the server.
 
