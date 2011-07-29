@@ -280,9 +280,7 @@ class QueryTarget(object):
         :param q: A Query object which will have the target applied to it.
 
         """
-        if isinstance(q, query.Query):
-            return q.set_target(self)
-        raise ValueError("Invalid arguments supplied to QueryTarget.find()")
+        return q.set_target(self)
 
     def search(self, search):
         """Perform a search.
