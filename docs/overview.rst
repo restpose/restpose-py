@@ -37,7 +37,7 @@ And then, searching those documents can be done by:
 
 .. doctest::
 
-    >>> s = coll.doc_type("blurb").field_text("text", "Hello")
+    >>> s = coll.doc_type("blurb").field("text").text("Hello")
     >>> s.matches_estimated
     1
     >>> s[0].data == {'text': ['Hello world'],

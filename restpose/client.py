@@ -145,14 +145,19 @@ class FieldQuerySource(object):
         """Create a query for fields which exactly match the given values.
 
         A document will match if at least one of the stored values for the
-        field exactly matches one or more of the given values.
+        field exactly matches at least one of the given values.
 
-        This query type is available for "exact", "id" and "cat" field types.
+        This query type is currently available only for "exact", "id" and "cat"
+        field types.
 
-        :param value: A container holding the values to search for.
+        :param value: A container holding the values to search for.  As a
+               special case, if a string is supplied, this is equivalent to
+               supplying a container holding that string.
 
         """
-        return QueryField(self.fieldname, 'is', value, target=self.target)
+        return QueryField(self.fieldname, 'is', values, target=self.target)
+
+    # FIXME - add "is_descendant" and "is_or_is_descendant"
 
     def __eq__(self, value):
         """Create a query for fields which exactly match the given value.
@@ -160,7 +165,8 @@ class FieldQuerySource(object):
         Matches documents in which the supplied value exactly matches the
         stored value.
 
-        This query type is available for "exact", "id" and "cat" field types.
+        This query type is currently available only for "exact", "id" and "cat"
+        field types.
 
         :param value: The value to search for.
 
@@ -173,6 +179,9 @@ class FieldQuerySource(object):
 
         Matches documents in which one of the stored values in the field are in
         the specified range, including both the begin and end values.
+
+        This type is currently available only for "double", "date" and
+        "timestamp" field types.
 
         :param begin: The start of the range.
         :param end: The end of the range.
@@ -252,7 +261,7 @@ class QueryTarget(object):
     """
     def __init__(self):
         #: Factory for field-specific queries.
-        self.fields = FieldQueryFactory(target=self)
+        self.field = FieldQueryFactory(target=self)
 
         #: Pseudo field for making queries across all fields.
         self.any_field = FieldQuerySource(fieldname=None, target=self)
@@ -264,78 +273,6 @@ class QueryTarget(object):
     def none(self):
         """Create a query which matches no documents."""
         return QueryNone(target=self)
-
-    def query_field(self, fieldname, querytype, value):
-        """Create a query based on the value in a field.
-
-        See the documentation of the restpose query types for the possible
-        values of querytype, and the corresponding structure which should be
-        passed in value.
-
-        Usually, rather than calling this method directly, it will be more
-        convenient to call one of the field_*() methods to construct the
-        appropriate query, which use this method internally.
-
-        """
-        return QueryField(fieldname, querytype, value, target=self)
-
-    def field_is(self, fieldname, value):
-        """Create a query for an exact value or values in a named field.
-
-        This query type is available for "exact" and "id" field types.
-
-        :param fieldname: The field to search.
-        :param value: The value to search for, or a list of values to search for.
-
-        """
-        if isinstance(value, (six.string_types, int)):
-            value = (value,)
-        return self.query_field(fieldname, 'is', value)
-
-    def field_range(self, fieldname, begin, end):
-        """Create a query for field values in a given range.
-
-        This query type is currently only available for "date" field types.
-
-        """
-        return self.query_field(fieldname, 'range', (begin, end))
-
-    def field_text(self, fieldname, text, op="phrase", window=None):
-        """Create a query for a piece of text in a field.
-
-         - @param "fieldname": the field to search within.
-         - @param "text": The text to search for.  If empty, this query will
-           match no results.
-         - @param "op": The operator to use when searching.  One of "or",
-           "and", "phrase" (ordered proximity), "near" (unordered proximity).
-           Default="phrase".
-         - @param "window": only relevant if op is "phrase" or "near". Window
-           size in words within which the words in the text need to occur for a
-           document to match; None=length of text. Integer or None.
-           Default=None
-
-        """
-        value = dict(text=text)
-        if op is not None:
-            value['op'] = op
-        if window is not None:
-            value['window'] = window
-        return self.query_field(fieldname, 'text', value)
-
-    def field_parse(self, fieldname, text, op="and"):
-        """Parse a structured query.
-
-         - @param "fieldname": the field to search within.
-         - @param "text": text to search for.  If empty, this query will match
-           no results.
-         - @param "op": The default operator to use when searching.  One of
-           "or", "and".  Default="and"
-
-        """
-        value = dict(text=text)
-        if op is not None:
-            value['op'] = op
-        return self.query_field(fieldname, 'parse', value)
 
     def find(self, q):
         """Apply a Query to this QueryTarget.

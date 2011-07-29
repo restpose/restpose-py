@@ -170,17 +170,47 @@ class SearchTest(RestPoseTestCase):
         self.assertEqual(d1.values, d3.values)
 
     def test_field_is(self):
-        q = self.coll.doc_type("blurb").field_is('tag', 'A tag')
+        q = self.coll.doc_type("blurb").field('tag') == 'A tag'
+        results = q.search()
+        self.check_results(results, items=self.expected_items_single)
+
+        q = self.coll.doc_type("blurb").field('tag').equals('A tag')
+        results = q.search()
+        self.check_results(results, items=self.expected_items_single)
+
+    def test_field_is_in(self):
+        """Test an is_in query."""
+        q = self.coll.doc_type("blurb").field.tag.is_in(['A tag', 'A bag'])
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-    def test_field_is_many(self):
-        """Test a field_is query with many values."""
-        q = self.coll.doc_type("blurb").field_is('tag', ['A tag', 'A bag'])
+        q = self.coll.doc_type("blurb").field.tag.is_in(['A flag', 'A bag'])
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=[])
+
+        q = self.coll.doc_type("blurb").field.id.is_in([1, 3])
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").field_is('tag', ['A flag', 'A bag'])
+        q = self.coll.doc_type("blurb").field.id.is_in([2, 3])
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=[])
+
+    def test_field_is_in_string(self):
+        """Test special case of is_in when a string is supplied."""
+        q = self.coll.doc_type("blurb").field.tag.is_in('A tag')
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=self.expected_items_single)
+
+        q = self.coll.doc_type("blurb").field.tag.is_in('A bag')
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=[])
+
+        q = self.coll.doc_type("blurb").field.id.is_in(1)
+        results = self.coll.doc_type("blurb").search(q)
+        self.check_results(results, items=self.expected_items_single)
+
+        q = self.coll.doc_type("blurb").field.id.is_in(2)
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -189,11 +219,11 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").fields.tag.exists()
+        q = self.coll.doc_type("blurb").field.tag.exists()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").fields('id').exists()
+        q = self.coll.doc_type("blurb").field('id').exists()
         # ID field is not stored, so searching for its existence returns
         # nothing.
         results = self.coll.doc_type("blurb").search(q)
@@ -205,7 +235,7 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").fields.missing.exists()
+        q = self.coll.doc_type("blurb").field.missing.exists()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -214,11 +244,11 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").fields.empty.empty()
+        q = self.coll.doc_type("blurb").field.empty.empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").fields('text').empty()
+        q = self.coll.doc_type("blurb").field('text').empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -230,7 +260,7 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").fields.missing.empty()
+        q = self.coll.doc_type("blurb").field.missing.empty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -239,11 +269,11 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
-        q = self.coll.doc_type("blurb").fields.empty.nonempty()
+        q = self.coll.doc_type("blurb").field.empty.nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").fields('text').nonempty()
+        q = self.coll.doc_type("blurb").field('text').nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=self.expected_items_single)
 
@@ -255,7 +285,7 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
-        q = self.coll.doc_type("blurb").fields.missing.nonempty()
+        q = self.coll.doc_type("blurb").field.missing.nonempty()
         results = self.coll.doc_type("blurb").search(q)
         self.check_results(results, items=[])
 
@@ -263,10 +293,10 @@ class SearchTest(RestPoseTestCase):
         results = self.coll.doc_type("blurb").any_field.has_error()
         self.check_results(results, items=self.expected_items_single)
 
-        results = self.coll.fields('test').has_error()
+        results = self.coll.field('test').has_error()
         self.check_results(results, items=self.expected_items_single)
 
-        results = self.coll.fields.text.has_error()
+        results = self.coll.field.text.has_error()
         self.check_results(results, items=[])
 
     def test_query_all(self):
@@ -426,27 +456,27 @@ class SearchTest(RestPoseTestCase):
 
     def test_field_text(self):
         """Test a text search."""
-        q = self.coll.doc_type("blurb").field_text("text", "Hello world")
+        q = self.coll.doc_type("blurb").field.text.text("Hello world")
         self.assertEqual(q[0].data, self.expected_item_data)
 
         # Default operator is phrase, so adding a word in the middle produces
         # no results.
-        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world")
+        q = self.coll.doc_type("blurb").field.text.text("Hello cold world")
         self.assertRaises(IndexError, q.__getitem__, 0)
 
         # Try with server-default for the operator.
-        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
-                                                   op=None)
+        q = self.coll.doc_type("blurb").field.text.text("Hello cold world",
+                                                        op=None)
         self.assertRaises(IndexError, q.__getitem__, 0)
 
         # Try with operator of or instead.
-        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
-                                                   op="or")
+        q = self.coll.doc_type("blurb").field.text.text("Hello cold world",
+                                                        op="or")
         self.assertEqual(q[0].data, self.expected_item_data)
 
         # Try with an invalid operator
-        q = self.coll.doc_type("blurb").field_text("text", "Hello cold world",
-                                                   op="invalid")
+        q = self.coll.doc_type("blurb").field.text.text("Hello cold world",
+                                                        op="invalid")
         self.assertRaises(RequestFailed, q.__getitem__, 0)
 
         # Try with a larger window
@@ -459,24 +489,24 @@ class SearchTest(RestPoseTestCase):
     def test_field_parse(self):
         """Test a parsed field search."""
         t = self.coll.doc_type("blurb")
-        q = t.field_parse("text", "Hello world")
+        q = t.field.text.parse("Hello world")
         self.assertEqual(q[0].data, self.expected_item_data)
 
         # Default operator is and, so adding a word in the middle produces
         # no results.
-        q = t.field_parse("text", "Hello cold world")
+        q = t.field.text.parse("Hello cold world")
         self.assertRaises(IndexError, q.__getitem__, 0)
 
         # Try with server-default for the operator.
-        q = t.field_parse("text", "Hello cold world", op=None)
+        q = t.field.text.parse("Hello cold world", op=None)
         self.assertRaises(IndexError, q.__getitem__, 0)
 
         # Try with operator of or instead.
-        q = t.field_parse("text", "Hello cold world", op="or")
+        q = t.field.text.parse("Hello cold world", op="or")
         self.assertEqual(q[0].data, self.expected_item_data)
 
         # Try with an invalid operator
-        q = t.field_parse("text", "Hello cold world", op="invalid")
+        q = t.field.text.parse("Hello cold world", op="invalid")
         self.assertRaises(RequestFailed, q.__getitem__, 0)
 
 
@@ -620,8 +650,8 @@ class LargeSearchTest(RestPoseTestCase):
 
     def test_query_range(self):
         dt = self.coll.doc_type('num')
-        q = dt.fields.num.range(46, 50)
-        q1 = dt.fields('num').range(46, 50)
+        q = dt.field.num.range(46, 50)
+        q1 = dt.field('num').range(46, 50)
         self.assertEqual(q._query, q1._query)
         self.assertEqual(q._target, q1._target)
         q1 = dt.find(Field.num.range(46, 50))
@@ -638,7 +668,7 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertRaises(IndexError, q.__getitem__, 5)
 
     def test_query_iteration(self):
-        q = self.coll.doc_type("num").fields.num.range(46, 50) \
+        q = self.coll.doc_type("num").field.num.range(46, 50) \
                 .order_by('num')
         self.assertEqual(list(item.data['num'][0] for item in q),
                          [46, 47, 48, 49, 50])
@@ -646,7 +676,7 @@ class LargeSearchTest(RestPoseTestCase):
                          [46, 47, 48, 49, 50])
 
     def test_query_filter(self):
-        q = self.coll.fields('num').range(46, 50)
+        q = self.coll.field('num').range(46, 50)
         self.assertEqual(len(q), 9) # num has 46-50, other has 46-49
         q1 = q.filter(Field.type.equals('num'))
         q2 = q.filter(self.coll.find(Field.type.equals('num')))
