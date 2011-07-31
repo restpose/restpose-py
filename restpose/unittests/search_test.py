@@ -555,7 +555,7 @@ class LargeSearchTest(RestPoseTestCase):
                                       '#\\tN': {},
                                       '#\\tNnum': {},
                                       })
-        self.assertEqual(gotdoc.values, { '268435599': '\\xb8\\xd0' })
+        self.assertEqual(gotdoc.values, { '268435599': '\\x02\\xb8\\xd0' })
 
         gotdoc = self.coll.get_doc("other", "17")
         self.assertEqual(gotdoc.data, {
