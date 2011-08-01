@@ -7,6 +7,11 @@
 The RestPose client mirrors the resources provided by the RestPose server as
 Python objects.
 
+.. testsetup::
+
+    from restpose import Server
+    coll = Server().collection('test_coll')
+
 """
 
 import six
@@ -154,6 +159,18 @@ class FieldQuerySource(object):
                special case, if a string is supplied, this is equivalent to
                supplying a container holding that string.
 
+        :example:
+
+            Search for documents in which the "tag" field has a value of
+            "edam", "cheddar" or "leicester".
+
+            >>> query = coll.field.tag.is_in(['edam', 'cheddar', 'leicester'])
+
+            Search for documents in which the "tag" field has a value of
+            "edam".
+
+            >>> query = coll.field.tag.is_in('edam')
+
         """
         return QueryField(self.fieldname, 'is', values, target=self.target)
 
@@ -168,7 +185,21 @@ class FieldQuerySource(object):
         This query type is currently available only for "exact", "id" and "cat"
         field types.
 
+        This query type may be constructed using the == operator, or the
+        ``equals`` method.
+
         :param value: The value to search for.
+
+        :example:
+
+            Search for documents in which the "tag" field has a value of
+            "edam".
+
+            >>> query = coll.field.tag.equals('edam')
+
+            Or, equivalently (but less conveniently for chained calls)
+
+            >>> query = (coll.field.tag == 'edam')
 
         """
         return QueryField(self.fieldname, 'is', (value,), target=self.target)
@@ -186,12 +217,23 @@ class FieldQuerySource(object):
         :param begin: The start of the range.
         :param end: The end of the range.
 
+        :example:
+
+            Search for documents in which the "num" field has a value in the
+            range 0 to 10 (including the endpoints).
+
+            >>> query = coll.field.num.range(0, 10)
+
         """
         return QueryField(self.fieldname, 'range', (begin, end),
                           target=self.target)
 
     def text(self, text, op="phrase", window=None):
         """Create a query for a piece of text in the field.
+
+        This is a simple search for a matching sequences of words (subject to
+        whatever processing has been performed on the field to conflate variant
+        forms of words, such as stemming or word splitting for CJK text).
 
         :param text: The text to search for.  If empty, this query will
                match no results.
@@ -202,6 +244,13 @@ class FieldQuerySource(object):
                in words within which the words in the text need to occur for a
                document to match; None=length of text. Integer or None.
                Default=None
+
+        :example:
+
+            Search for documents in which the "text" field contains text
+            matching the phrase "Hello world".
+
+            >>> query = coll.field.text.text("Hello world")
 
         """
         value = dict(text=text)
@@ -214,11 +263,29 @@ class FieldQuerySource(object):
     def parse(self, text, op="and"):
         """Parse a structured query, searching the field.
 
+        Unlike text, this allows various operators to be used in the query; for
+        example, parentheses may be used, and operators such as "AND" may be
+        used 
+
+        .. todo:: Document the operators permitted.
+
+        Beware that the parser is unable to make sense of some query strings
+        (eg, those with mismatched parentheses).  If such a query string is
+        used, an error will be returned by the server when the search is
+        performed.
+
         :param fieldname: The field to search within.
         :param text: Text to search for.  If empty, this query will match no
                results.
         :param op: The default operator to use when searching.  One of "or",
                "and".  Default="and".
+
+        :example:
+
+            Search for documents in which the "text" field contains both
+            "Hello" and "world", but not "big".
+
+            >>> query = coll.field.text.text("Hello world -big")
 
         """
         value = dict(text=text)
@@ -229,11 +296,36 @@ class FieldQuerySource(object):
     def exists(self):
         """Search for documents in which the field exists.
 
+        This type may be used to search across all fields.
+
+        :example:
+
+            Search for documents in which the "text" field exists.
+
+            >>> query = coll.field.text.exists()
+
+            Search for documents in which any field exists.
+
+            >>> query = coll.any_field.exists()
+
         """
         return QueryMeta('exists', (self.fieldname,), target=self.target)
 
     def nonempty(self):
         """Search for documents in which the field has a non-empty value.
+
+        This type may be used to search across all fields.
+
+        :example:
+
+            Search for documents in which the "text" field has a non-empty
+            value.
+
+            >>> query = coll.field.text.nonempty()
+
+            Search for documents in which any field has a non-empty value.
+
+            >>> query = coll.any_field.nonempty()
 
         """
         return QueryMeta('nonempty', (self.fieldname,), target=self.target)
@@ -241,12 +333,38 @@ class FieldQuerySource(object):
     def empty(self):
         """Search for documents in which the field has an empty value.
 
+        This type may be used to search across all fields.
+
+        :example:
+
+            Search for documents in which the "text" field has an empty
+            value.
+
+            >>> query = coll.field.text.empty()
+
+            Search for documents in which any field has an empty value.
+
+            >>> query = coll.any_field.empty()
+
         """
         return QueryMeta('empty', (self.fieldname,), target=self.target)
 
     def has_error(self):
         """Search for documents in which the field produced errors when
         parsing.
+
+        This type may be used to search across all fields.
+
+        :example:
+
+            Search for documents in which the "text" field had an error when
+            parsing.
+
+            >>> query = coll.field.text.has_error()
+
+            Search for documents in which any field had an error when parsing.
+
+            >>> query = coll.any_field.has_error()
 
         """
         return QueryMeta('error', (self.fieldname,), target=self.target)
@@ -285,8 +403,8 @@ class QueryTarget(object):
     def search(self, search):
         """Perform a search.
 
-        @param search is a search structure to be sent to the server, or a
-        Search or Query object.
+        :param search: is a search structure to be sent to the server, or a
+                       Search or Query object.
 
         """
         if hasattr(search, '_build_search'):

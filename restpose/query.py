@@ -349,11 +349,11 @@ class Searchable(object):
         [suffix, occurrence count] or [suffix, occurrence count, termfreq] if
         get_termfreqs was true.
 
-        @param prefix: prefix of terms to check occurrence for
-        @param doc_limit: number of matching documents to stop checking after.  None=unlimited.  Integer or None.  Default=None
-        @param result_limit: number of terms to return results for.  None=unlimited.  Integer or None. Default=None
-        @param get_termfreqs: set to true to also get frequencies of terms in the db.  Boolean.  Default=False
-        @param stopwords: list of stopwords - term suffixes to ignore.  Array of strings.  Default=[]
+        :param prefix: prefix of terms to check occurrence for
+        :param doc_limit: number of matching documents to stop checking after.  None=unlimited.  Integer or None.  Default=None
+        :param result_limit: number of terms to return results for.  None=unlimited.  Integer or None. Default=None
+        :param get_termfreqs: set to true to also get frequencies of terms in the db.  Boolean.  Default=False
+        :param stopwords: list of stopwords - term suffixes to ignore.  Array of strings.  Default=[]
 
         """
         result = TerminalQuery(self)
@@ -379,6 +379,8 @@ class Searchable(object):
         the form: [suffix1, suffix2, co-occurrence count] or [suffix1, suffix2,
         co-occurrence count, termfreq of suffix1, termfreq of suffix2] if
         get_termfreqs was true.
+
+        .. todo:: Document parameters.
 
         """
         result = TerminalQuery(self)
