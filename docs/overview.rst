@@ -129,27 +129,207 @@ checkpoint has been processed.  Alternatively, if you don't want to block, the
 checkpt.reached property will reflect the current state of the checkpoint on
 the server.
 
-.. note:: Currently, the server doesn't support long-polling, so the wait()
-	  method is implemented by polling the server periodically.  This
-	  implementation is likely to be improved in future.
+.. note:: Currently, the server doesn't support long-polling for checkpoint
+	  status, so the wait() method is implemented by polling the server
+	  periodically.  This implementation is likely to be improved in
+	  future.
 
-It is also possible to make a checkpoint which doesn't cause a commit, in order
-to collect errors and control ordering of processing operations.  To do this,
-simply pass `commit=False` to the :meth:`Collection.checkpoint
+It is also possible to make a checkpoint which doesn't cause a commit, in
+order to collect errors and control ordering of processing operations.  To do
+this, simply pass `commit=False` to the :meth:`Collection.checkpoint
 <restpose.client.Collection.checkpoint>` method when creating the checkpoint.
-
-Searching
----------
-
-.. todo:: Document the ways in which searches can be created, and the ways in which results can be accessed.
-
 
 Field types
 -----------
 
-.. todo:: Document how field types are picked automatically, and point to the comprehensive documentation of the field types in the main restpose docs.
+.. todo:: This section needs rewriting for clarity (sorry!).
 
-Facets
-------
+There are many different ways in which the data supplied in a field can be
+processed and made available for searching.  The way in which each field is
+indexed is controlled by the collection configuration, and can be adjusted
+separately for each document type.
 
-.. todo:: Document how to get facets, and how to make searches from them.
+Essentially, the configuration maps each field name to a field type, and
+associates various parameters with those field types.
+
+Additionally, when a new field is seen (ie, one for which the configuration
+doesn't have an entry), the configuration contains a list of patterns which
+are applied in order, and the first match is used to configure the new field.
+
+Currently, the RestPose Python client doesn't provide much support to help
+you work with collection configuration; it just provides a mechanism for
+getting and setting the full configuration as a hierarchical structure.  The
+full configuration of a collection may be obtained from the server using the
+the :meth:`Collection.config <restpose.client.Collection.config>` property.
+This may then be modifed and applied back to the property.  For example, to
+add a pattern to the default configuration for a new document type (ie, to
+the configuration which will be used when a new document type is seen for the
+first time):
+
+.. doctest::
+
+    >>> c = coll.config
+    >>> c['default_type']['patterns'].insert(0,
+    ...    ['test',
+    ...     {'group': 'T', 'max_length': 10, 'too_long_action': 'error',
+    ...      'type': 'exact'}])
+    >>> coll.config = c
+
+After the above, adding a new document to the collection with a previously
+unseen document type would cause the configuration for indexing the document
+type to process a field called "test" for exact matching, in group "T", but
+produce an error if any entries in the "test" field were longer than 10
+characters.
+
+Details of the field types available, the parameters which can be applied to
+them, and the default list of patterns, are contained in the server
+documentation: :ref:`restpose:types_and_schemas`.
+
+Searching
+---------
+
+There are several ways to build up and perform a search in RestPose.  Here's a
+simple example:
+
+.. doctest::
+
+    >>> search = coll.field('text').text('Hello')
+    >>> print len(search)
+    1
+    >>> search[0].data
+    {'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']}
+
+By convention, the word ``query`` is used in RestPose to refer to a set of
+operations which can be used to match and associate a weight with a set of
+documents.  The word ``search`` is then used as a noun to refer to an object
+comprising a query, and any other options involved in performing the search
+(for example, the offset of the first result to retrieve from the server, or
+options controlling additional information to retrieve).  The word ``search``
+is also used as a very to refer to the operation of performing a search.
+
+Queries can be constructed in several ways.  Firstly, a query can be created
+which searches the contents of a named field.
+
+.. doctest::
+
+   >>> query = coll.field.text.parse('Hello')
+
+In this case, ``query`` will represent a query on the "text" field, and will
+use the query parser configured for that field to build a query from the word
+"Hello".  The query will also be bound to the collection ``coll``, so that when
+it is performed, the entire collection will be searched.  We say that the
+target of the query is the entire collection.
+
+.. note:: if the field name is not a valid python identifier, or is stored in a
+   variable, you can use an alternative syntax of calling the ``coll.field``
+   property, passing the field name as a parameter.  For example:
+
+      >>> query = coll.field('text').parse('Hello')
+
+A query can also be created which is bound to a document type within a
+collection; when such a query is performed, only documents of the given type
+will be considered for matching.  For example, the following command will
+produce a query which has a target of the "blurb" document type within the
+collection.
+
+.. doctest::
+
+   >>> query = coll.doc_type('blurb').field('text').text('Hello')
+
+A query can also be created which is bound to neither a document type nor a
+collection; before such a query can be performed it must be given a target
+(which can be done by combining it with a query which is already associated
+with a target, or by explicitly setting a target).
+
+.. doctest::
+
+   >>> from restpose import Field
+   >>> query = Field('text').text('Hello')
+
+What's happening behind the scenes here is that the :meth:`field
+<restpose.client.QueryTarget.field>` method and the ``Field`` factory produce a
+:class:`FieldQuerySource <restpose.client.FieldQuerySource>` object, which
+provides various methods for creating queries.
+
+Some query types can be performed across all fields; for this, the ``AnyField``
+factory can be used to create unbound queries, or the :meth:`any_field
+<restpose.client.QueryTarget.any_field>` method can be used to create bound
+queries on collections or document types.  The documentation for each query
+type indicates whether it is valid to search across all fields with that query
+type.
+
+Primitive query types
+~~~~~~~~~~~~~~~~~~~~~
+
+There are several "primitive" query types other than the "text" type described
+so far.  Most of these are only applicable to fields which have been configured
+in particular ways.  For full details of the search options available in
+RestPose, see the server documentation on :ref:`restpose:searches`; this
+section will discuss how to construct each type of query in Python.
+
+ * .. automethod:: restpose.client.FieldQuerySource.is_in
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.equals
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.range
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.text
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.parse
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.exists
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.nonempty
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.empty
+      :noindex:
+
+ * .. automethod:: restpose.client.FieldQuerySource.has_error
+      :noindex:
+
+.. Note:: it is perfectly possible to construct a query on a field which
+   cannot be performed due to the way in which a field has been configured;
+   many queries can only be performed on certain types of field.  If you do
+   this, you'll get an error when you try to perform the search, not when you
+   construct the query.
+
+Combining queries
+~~~~~~~~~~~~~~~~~
+
+Queries can be combined using several operators to build a query tree.  These
+operators can be used to produce various boolean combinations of matching
+results, and also to influence the way in which weights are combined.
+
+Additional information (Facets, Term occurrence)
+------------------------------------------------
+
+Often, it is useful to be able to get additional information along with a
+search result; for example, in a faceted search application, it is desirable to
+get counts of the number of matching documents which have each value of a
+field, which are then used to display options for narrowing down the search.
+
+Currently, RestPose supports getting two types of additional information:
+occurrence counts for terms, and co-occurrence counts for terms.  While the
+occurrence counts feature could be used to support a faceted search interface,
+it wouldn't perform particularly well, because it is fairly slow to access the
+term occurrence counts.  More efficient support for faceted search (involving
+storing the required information in a slot allowing for faster access) will be
+implemented in a future release; if you have urgent need of it, contact the
+author on IRC (in #restpose on irc.freenode.net).
+
+Term occurrence
+~~~~~~~~~~~~~~~
+
+.. todo:: Document
+
+Term co-occurrence
+~~~~~~~~~~~~~~~~~~
+
+.. todo:: Document
