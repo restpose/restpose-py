@@ -6,6 +6,10 @@
 """
 Queries in RestPose.
 
+.. testsetup::
+
+    from restpose import Field, And
+
 """
 
 import copy
@@ -68,7 +72,7 @@ class Searchable(object):
 
         If the target was already set to the same value, returns self.
         Otherwise, returns a copy of target.
-        
+
         """
         if self._target is target:
             return self
@@ -330,10 +334,10 @@ class Searchable(object):
             # risk breaking existing applications at that point.
             assert isinstance(field, six.string_types)
             order_item['field'] = field
-        
+
         if ascending is not None:
             order_item['ascending'] = ascending
-        
+
         result = TerminalQuery(self)
         result._order_by = [order_item]
         return result
@@ -433,8 +437,17 @@ class Query(Searchable):
         This can be used to build a query in which the weights of some
         subqueries are increased or decreased relative to the other subqueries.
 
+        :param mult: The multiplier to apply.  Must be a positive number.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains the
+          value ``'foo'`` and the weights are multiplied by 2.5
+
+          >>> query = Field('tag').equals('foo') * 2.5
+
         """
-        return QueryMultWeight(self, mult, target=self._target)
+        return MultWeight(self, mult, target=self._target)
 
     def __rmul__(self, lhs):
         """Return a query with the weights scaled by a multiplier.
@@ -459,15 +472,48 @@ class Query(Searchable):
         return self.__mul__(1.0 / rhs)
 
     def __and__(self, other):
+        """Produce an And query combining this query with ``other``.
+
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains both
+          the value ``'foo'`` and the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo') & Field('tag').equals('bar')
+
+        """
         return And(self, other, target=self._target)
 
     def __or__(self, other):
+        """Produce an Or query combining this query with ``other``.
+
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains at
+          least one of the value ``'foo'`` or the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo') | Field('tag').equals('bar')
+
+        """
         return Or(self, other, target=self._target)
 
-    def __xor__(self, other):
-        return Xor(self, other, target=self._target)
-
     def __sub__(self, other):
+        """Produce an AndNot query combining this query with ``other``.
+
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains the
+          value ``'foo'`` and not the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo') - Field('tag').equals('bar')
+
+        """
         return AndNot(self, other, target=self._target)
 
     def filter(self, other):
@@ -475,6 +521,16 @@ class Query(Searchable):
 
         This returns only documents which match both the original and the
         filter query, but uses only the weights from the original query.
+
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains the
+          value ``'foo'``, filtered to only include documents in which the
+          ``tag`` field also contains the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo').filter(Field('tag').equals('bar'))
 
         """
         return Filter(self, other, target=self._target)
@@ -486,8 +542,33 @@ class Query(Searchable):
         This returns exactly the documents which match the original query, but
         adds the weight from corresponding matches to the other query.
 
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains the
+          value ``'foo'``, but with additional weights for any matches
+          containing the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo').and_maybe(Field('tag').equals('bar'))
+
         """
         return AndMaybe(self, other, target=self._target)
+
+    def __xor__(self, other):
+        """Produce an Xor query combining this query with ``other``.
+
+        :param other: The query to combine with this query.
+
+        :example:
+
+          A query returning documents in which the ``tag`` field contains
+          exactly one of the value ``'foo'`` or the value ``'bar'``.
+
+          >>> query = Field('tag').equals('foo') ^ Field('tag').equals('bar')
+
+        """
+        return Xor(self, other, target=self._target)
 
 
 class QueryField(Query):
@@ -556,6 +637,18 @@ class And(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries.
 
+    .. testsetup::
+
+        from restpose import And
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains both the
+      value ``'foo'`` and the value ``'bar'``.
+
+      >>> query = And(Field('tag').equals('foo'),
+      ...             Field('tag').equals('bar'))
+
     """
     _op = "and"
 
@@ -564,6 +657,18 @@ class Or(CombinedQuery):
     """A query which matches the documents matched by any subquery.
 
     The weights are the sum of the weights in the subqueries which match.
+
+    .. testsetup::
+
+        from restpose import Or
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains at least
+      one of the value ``'foo'`` or the value ``'bar'``.
+
+      >>> query = Or(Field('tag').equals('foo'),
+      ...            Field('tag').equals('bar'))
 
     """
     _op = "or"
@@ -575,6 +680,18 @@ class Xor(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries which match.
 
+    .. testsetup::
+
+        from restpose import Xor
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains exactly
+      one of the value ``'foo'`` or the value ``'bar'``.
+
+      >>> query = Xor(Field('tag').equals('foo'),
+      ...             Field('tag').equals('bar'))
+
     """
     _op = "xor"
 
@@ -585,6 +702,18 @@ class AndNot(CombinedQuery):
 
     The weights returned are the weights in the first subquery.
 
+    .. testsetup::
+
+        from restpose import AndNot
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains the value
+      ``'foo'`` but not the value ``'bar'``.
+
+      >>> query = AndNot(Field('tag').equals('foo'),
+      ...                Field('tag').equals('bar'))
+
     """
     _op = "and_not"
 
@@ -592,6 +721,19 @@ class AndNot(CombinedQuery):
 class Filter(CombinedQuery):
     """A query which matches the documents matched by all the subqueries, but
     only returns weights from the first subquery.
+
+    .. testsetup::
+
+        from restpose import Filter
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains the value
+      ``'foo'``, with weights from this match, but only where the ``tag`` field
+      also contains the value ``'bar'``.
+
+      >>> query = Filter(Field('tag').equals('foo'),
+      ...                Field('tag').equals('bar'))
 
     """
     _op = "filter"
@@ -603,13 +745,38 @@ class AndMaybe(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries.
 
+    .. testsetup::
+
+        from restpose import AndMaybe
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains the value
+      ``'foo'``, with weights from this match, but with additional weights for
+      any of these documents in which the ``tag`` field contains the value
+      ``'bar'``.
+
+      >>> query = AndMaybe(Field('tag').equals('foo'),
+      ...                  Field('tag').equals('bar'))
+
     """
     _op = "and_maybe"
 
 
-class QueryMultWeight(Query):
+class MultWeight(Query):
     """A query which matches all the documents matched by another query, but
     with the weights multiplied by a factor.
+
+    .. testsetup::
+
+        from restpose import MultWeight
+
+    :example:
+
+      A query returning documents in which the ``tag`` field contains the value
+      ``'foo'``, with weights multiplied by 2.5.
+
+      >>> query = MultWeight(Field('tag').equals('foo'), 2.5)
 
     """
     def __init__(self, query, factor, target=None):
@@ -617,8 +784,11 @@ class QueryMultWeight(Query):
 
         """
         if target is None:
-            target = query.target
-        super(QueryMultWeight, self).__init__(target=target)
+            target = query._target
+        super(MultWeight, self).__init__(target=target)
+        factor = float(factor)
+        if factor < 0:
+            raise ValueError("factor in MultWeight must be postive")
         self._query = dict(scale=dict(query=_query_struct(query), factor=factor))
 
 

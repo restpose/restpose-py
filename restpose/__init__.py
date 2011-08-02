@@ -8,7 +8,8 @@
 
 from .client import Server, Field, AnyField
 from .errors import RestPoseError, CheckPointExpiredError
-from .query import Query, Searchable, And, Or, Xor, AndNot, Filter, AndMaybe
+from .query import Query, Searchable, And, Or, Xor, AndNot, Filter, \
+                   AndMaybe, MultWeight
 from .version import dev_release, version_info, __version__
 
 from restkit import ResourceNotFound, Unauthorized, RequestFailed, \
