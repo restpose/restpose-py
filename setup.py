@@ -17,7 +17,7 @@ setup(name="Restpose",
       license='MIT',
       url='https://github.com/rboulton/restpose',
       classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
