@@ -916,6 +916,7 @@ class SearchResults(object):
 
     @property
     def info(self):
+        """The list of information items returned from the server."""
         return self._raw.get('info', [])
 
     def at_rank(self, rank):
