@@ -573,9 +573,39 @@ author on IRC (in #restpose on irc.freenode.net).
 Term occurrence
 ~~~~~~~~~~~~~~~
 
-.. todo:: Document
+RestPose can calculate counts of each term seen in matching documents.  To do
+this, use `calc_occur` on the Searchable to indicate that the information
+should be calculated during the search.
+
+.. automethod:: restpose.query.Searchable.calc_occur
+    :noindex:
+
+The occurrence counts can then be retrieved via the :attr:`Searchable.info
+<restpose.query.Searchable.info>` property.  Note that it is usually advisable
+to set the ``check_at_least`` value for such a search, to ensure that a
+reasonable number of potential matches will be included when calculating the
+occurrence counts.  Conversely, because calculating this requires access to the
+termlists for each document observed, which is a slow operation, the
+`calc_occur` method allows you to limit the number of documents checked using
+the `doc_limit` parameter; you can set this to get a sampling of the documents
+in the index, rather than potentially checking all of them (note that such a
+sampling isn't unbiased, unfortunately; the documents which are sampled will be
+the ones nearer the start of the index, which usually means those documents
+which were indexed first).
 
 Term co-occurrence
 ~~~~~~~~~~~~~~~~~~
 
-.. todo:: Document
+Similarly, Restpose can calculate counts of which term-pairs occur together
+most often.  To do this, use `calc_cooccur` on the Searchable to indicate that
+the information should be calculated during the search.
+
+.. automethod:: restpose.query.Searchable.calc_cooccur
+    :noindex:
+
+The same options as when calculating term occurrence counts apply for
+controlling the number of documents considered when calculating this
+information.  Note that calculating this is significantly more expensive than
+calculating the pure occurrence counts, so in a large system you might well
+want to start with small limits, and gradually increase the counts until
+performance is no longer acceptable.

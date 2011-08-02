@@ -322,6 +322,14 @@ class SearchTest(RestPoseTestCase):
                                'prefix': 't',
                                'type': 'cooccur'
                            }])
+        self.assertEqual(q.calc_cooccur('t').info,
+                         [{
+                             'counts': [['hello', 'world', 1]],
+                             'docs_seen': 1,
+                             'terms_seen': 2,
+                             'prefix': 't',
+                             'type': 'cooccur'
+                         }])
 
     def test_calc_occur(self):
         q = self.coll.doc_type("blurb").all()

@@ -342,6 +342,14 @@ class Searchable(object):
         result._order_by = [order_item]
         return result
 
+    @property
+    def info(self):
+        """Get the list of information items returned by the search.
+
+        """
+        self._ensure_results_stats()
+        return self._results.info
+
     def calc_occur(self, prefix, doc_limit=None, result_limit=None,
                    get_termfreqs=False, stopwords=[]):
         """Get occurrence counts of terms in the matching documents.
