@@ -15,6 +15,8 @@ Indexing some documents is as simple as:
 .. testsetup::
 
     import restpose 
+    from restpose import Field, And, Or, Xor, AndNot, Filter, AndMaybe, \
+                         MultWeight
     server = restpose.Server('http://localhost:7777')
     coll = server.collection("test_coll")
     coll.delete()

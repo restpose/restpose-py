@@ -8,7 +8,8 @@ Queries in RestPose.
 
 .. testsetup::
 
-    from restpose import Field, And
+    from restpose import Field, And, Or, Xor, AndNot, Filter, AndMaybe, \
+                         MultWeight
 
 """
 
@@ -645,10 +646,6 @@ class And(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries.
 
-    .. testsetup::
-
-        from restpose import And
-
     :example:
 
       A query returning documents in which the ``tag`` field contains both the
@@ -665,10 +662,6 @@ class Or(CombinedQuery):
     """A query which matches the documents matched by any subquery.
 
     The weights are the sum of the weights in the subqueries which match.
-
-    .. testsetup::
-
-        from restpose import Or
 
     :example:
 
@@ -688,10 +681,6 @@ class Xor(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries which match.
 
-    .. testsetup::
-
-        from restpose import Xor
-
     :example:
 
       A query returning documents in which the ``tag`` field contains exactly
@@ -710,10 +699,6 @@ class AndNot(CombinedQuery):
 
     The weights returned are the weights in the first subquery.
 
-    .. testsetup::
-
-        from restpose import AndNot
-
     :example:
 
       A query returning documents in which the ``tag`` field contains the value
@@ -729,10 +714,6 @@ class AndNot(CombinedQuery):
 class Filter(CombinedQuery):
     """A query which matches the documents matched by all the subqueries, but
     only returns weights from the first subquery.
-
-    .. testsetup::
-
-        from restpose import Filter
 
     :example:
 
@@ -753,10 +734,6 @@ class AndMaybe(CombinedQuery):
 
     The weights are the sum of the weights in the subqueries.
 
-    .. testsetup::
-
-        from restpose import AndMaybe
-
     :example:
 
       A query returning documents in which the ``tag`` field contains the value
@@ -774,10 +751,6 @@ class AndMaybe(CombinedQuery):
 class MultWeight(Query):
     """A query which matches all the documents matched by another query, but
     with the weights multiplied by a factor.
-
-    .. testsetup::
-
-        from restpose import MultWeight
 
     :example:
 
