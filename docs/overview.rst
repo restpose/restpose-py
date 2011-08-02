@@ -239,7 +239,8 @@ collection.
 A query can also be created which is bound to neither a document type nor a
 collection; before such a query can be performed it must be given a target
 (which can be done by combining it with a query which is already associated
-with a target, or by explicitly setting a target).
+with a target, or by explicitly setting a target using the :meth:`set_target
+<restpose.query.Searchable.set_target>` method.).
 
 .. doctest::
 
@@ -456,7 +457,101 @@ are the boolean operations:
 Performing searches
 ~~~~~~~~~~~~~~~~~~~
 
-.. todo
+Now you've done all this work to get a query, you'll almost certainly want to
+perform a search using it.  Fortunately, this is very easy.
+
+If you wish to control exactly when a search is sent to the server, you can
+perform a search directly using the :meth:`search
+<restpose.client.QueryTarget.search>` method on a Collection or DocumentType.
+This returns a :class:`SearchResults <restpose.query.SearchResults>` object
+which provides convenient access to the results as returned from the server.
+
+However, an alternative approach which is often more convenient is also
+provided: Query objects can be sliced and subscripted to get at the list of
+matching documents.  They also support various methods and properties to get
+statistics about things like the number of matching documents.  Communication
+with the server will be performed when necessary, and the results of such
+communication will be cached.
+
+For example, suppose we have a query such as:
+
+>>> query = coll.field('text').text('Hello')
+
+To get the first result of a query:
+
+>>> print query[0]
+SearchResult(rank=0, data={'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']})
+
+Suppose you want the top 10 results.  One approach would be to subscript the
+query with 0, 1, 2, etc.  This will actually be fairly efficient - the Python
+RestPose client will request pages of results when it doesn't know how many
+results you're going to want (the default page size is 20, but this can be
+adjusted by changing the :attr:`page_size
+<restpose.query.Searchable.page_size>` property).  You can even iterate over
+all matching documents using the standard python iteration mechanism; the
+iterator will return SearchResult objects.
+
+>>> for r in query: print r
+SearchResult(rank=0, data={'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']})
+
+To get just the first 10 results of the query, you can slice the query; this
+returns a :class:`TerminalQuery <restpose.query.TerminalQuery>`, which has all
+the same properties for performing searches as the other Query classes we've
+discussed so far, but may not be combined with other Query objects.  The
+TerminalQuery can be subscripted and iterated, but (unless the slice has an
+open upper end) you are guaranteed that the results will be requested from the
+server in a single page of size and offset governed by the slice.
+:class:`Query <restpose.query.Query>` and :class:`TerminalQuery
+<restpose.query.TerminalQuery>` have a common base class of :class:`Searchable
+<restpose.query.Searchable>`.
+
+The Xapian search engine, used by RestPose, implements some sophisticated
+optimisations for calculating the top results of a query without having to
+calculate all the possible documents matching a query.  To give these
+optimisations as much scope to work as possible, you should usually slice your
+query before accessing individual search results.
+
+To get the total number of matching documents, you can use the ``len`` builtin
+on a Query object.  This will cause a search to be performed if necessary, and
+will return the exact number of matching documents.  However, again, if you do
+not need the exact number of matching documents, you can allow the Xapian
+optimisations to work a lot better by using a set of properties which produce
+an estimate and bounds on the number of matching documents.  Specifically:
+
+* the :attr:`matches_lower_bound
+  <restpose.query.Searchable.matches_lower_bound>` property returns a lower
+  bound on the number of matching documents.
+
+* the :attr:`matches_estimated <restpose.query.Searchable.matches_estimated>`
+  property returns an estimate of the number of matching documents.
+
+* the :attr:`matches_upper_bound
+  <restpose.query.Searchable.matches_upper_bound>` property returns an upper
+  bound on the number of matching documents.
+
+* the :attr:`estimate_is_exact
+  <restpose.query.Searchable.estimate_is_exact>` property returns True if the
+  estimate produced by ``matches_estimated`` is known to be the exact number of
+  matching documents.
+
+It is possible to influence how much work Xapian performs when searching to
+calculate the number of matching documents.  This can be done using the
+:meth:`check_at_least <restpose.query.Searchable.check_at_least>` method, which
+produces a new :class:`TerminalQuery <restpose.query.TerminalQuery>` with the
+supplied ``check_at_least`` value.  When the search is performed, Xapian will
+check at least this number of documents for being potential matches to the
+search (if there are sufficient matches).  This ensures that the estimate and
+bounds will be exact if fewer documents match than the supplied number; higher
+``check_at_least`` values will increase the accuracy of the estimate, but will
+reduce the speed at which the search is performed.
+
+Setting the ``check_at_least`` value can also be useful when calculating
+additional match information, such as counting term occurrence,  and faceting.
+
+Another useful property is the :attr:`total_docs
+<restpose.query.Searchable.total_docs>` property, which returns the number of
+documents in the target of the search (ie, in the DocumentType or Collection
+searched).
 
 Additional information (Facets, Term occurrence)
 ------------------------------------------------
