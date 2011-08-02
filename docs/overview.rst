@@ -267,32 +267,32 @@ in particular ways.  For full details of the search options available in
 RestPose, see the server documentation on :ref:`restpose:searches`; this
 section will discuss how to construct each type of query in Python.
 
- * .. automethod:: restpose.client.FieldQuerySource.is_in
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.is_in
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.equals
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.equals
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.range
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.range
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.text
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.text
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.parse
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.parse
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.exists
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.exists
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.nonempty
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.nonempty
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.empty
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.empty
+     :noindex:
 
- * .. automethod:: restpose.client.FieldQuerySource.has_error
-      :noindex:
+* .. automethod:: restpose.client.FieldQuerySource.has_error
+     :noindex:
 
 .. Note:: it is perfectly possible to construct a query on a field which
    cannot be performed due to the way in which a field has been configured;
@@ -300,12 +300,163 @@ section will discuss how to construct each type of query in Python.
    this, you'll get an error when you try to perform the search, not when you
    construct the query.
 
+There are also a couple of primitive query types which aren't specific to a
+field, and can be created by methods of :class:`Collection
+<restpose.client.Collection>` or :class:`DocumentType
+<restpose.client.DocumentType>`.
+
+* .. automethod:: restpose.client.QueryTarget.all
+      :noindex:
+
+* .. automethod:: restpose.client.QueryTarget.none
+      :noindex:
+
 Combining queries
 ~~~~~~~~~~~~~~~~~
 
 Queries can be combined using several operators to build a query tree.  These
 operators can be used to produce various boolean combinations of matching
 results, and also to influence the way in which weights are combined.
+
+There are many ways in which queries can be combined; the simplest to describe
+are the boolean operations:
+
+* Boolean AND
+
+  A query can be constructed which only returns documents which match all of a
+  set of subqueries.
+
+  .. autoclass:: restpose.query.And
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the ``&``
+  operator:
+
+  .. automethod:: restpose.query.Query.__and__
+      :noindex:
+
+* Boolean OR
+
+  A query can be constructed which only returns documents which match all of a
+  set of subqueries.
+
+  .. autoclass:: restpose.query.Or
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the ``|``
+  operator:
+
+  .. automethod:: restpose.query.Query.__or__
+      :noindex:
+
+* Boolean AND-NOT
+
+  Rather than supporting a unary NOT operator (which would return all documents
+  not matched by a query), RestPose implement an "AndNot" operator, which
+  returns documents which match one query, but do not match another query.
+  
+  The lack of a unary NOT operator is because it is not generally possible to
+  efficiently compute a list of all the documents in a Collection which do not
+  match a query with the datastructures in use by RestPose.  Also, because it
+  is difficult to associate useful scores with documents matching a unary NOT
+  operator, it is rarely desirable to implement a unary NOT operator.  If you
+  really need a unary NOT, you can use an ``all`` query as part of the AndNot
+  operator.
+
+  To construct a query which returns documents which match one query, but do
+  not match any of a set of other queries:
+
+  .. autoclass:: restpose.query.AndNot
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the ``-``
+  operator:
+
+  .. automethod:: restpose.query.Query.__sub__
+      :noindex:
+
+* Filter
+
+  A filter query is a query which returns documents and weights from an initial
+  query, but removes any documents which do not match another query (or set of
+  queries).
+  
+  The ``Filter`` constructor allows a query to be constructed which returns
+  documents which match all of a set of subqueries, but only returns the weight
+  from the first of these subqueries.
+
+  .. autoclass:: restpose.query.Filter
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the
+  ``filter`` method:
+
+  .. automethod:: restpose.query.Query.filter
+      :noindex:
+
+* AndMaybe
+
+  An AndMaybe query is a query which returns only those documents which match
+  an initial query, but adds weights from a set of other subqueries.  This can
+  be used to adjust weights based on external factors (for example, matching
+  tags), without causing extra documents to match the query.
+
+  The ``AndMaybe`` constructor allows a query to be constructed which returns
+  documents which match all of a set of subqueries, but only returns the weight
+  from the first of these subqueries.
+
+  .. autoclass:: restpose.query.AndMaybe
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the
+  ``and_maybe`` method:
+
+  .. automethod:: restpose.query.Query.and_maybe
+      :noindex:
+
+* Weight multiplication and division
+
+  The weights returned from a query can be modified by multiplying them by a
+  constant (positive) factor.  This can be used to bias the results from part
+  of a combined query over the results from other parts of a combined query.
+
+  The ``MultWeight`` constructor allows a query to be constructed which returns
+  exactly the same documents as a subquery, but with the weight multiplied by a
+  factor.
+
+  .. autoclass:: restpose.query.MultWeight
+      :noindex:
+
+  Such a query can also be constructed by use of the ``*`` operator, applied to
+  a positive number and a query (the query may be either on the right hand or
+  left hand side):
+
+  .. automethod:: restpose.query.Query.__mul__
+
+  Weights can also be divided using the ``/`` operator.
+
+* Boolean XOR
+
+  Finally, RestPose also supports an XOR operator - this is rarely of much
+  practical use, but is included for completeness of boolean operators.
+
+  A query can be constructed which only returns documents which match an odd
+  number of a set of subqueries.
+
+  .. autoclass:: restpose.query.Xor
+      :noindex:
+
+  Such a query can also be constructed by joining two queries with the ``^``
+  operator:
+
+  .. automethod:: restpose.query.Query.__xor__
+      :noindex:
+
+
+Performing searches
+~~~~~~~~~~~~~~~~~~~
+
+.. todo
 
 Additional information (Facets, Term occurrence)
 ------------------------------------------------
