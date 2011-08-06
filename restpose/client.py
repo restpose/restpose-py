@@ -737,8 +737,18 @@ class Taxonomy(object):
     def add_parent(self, category, parent):
         """Add a parent to a category.
 
-        Creates both the category and the parent, if necessary.
+        Creates the collection, taxononmy, category and the parent, if
+        necessary.
 
         """
         return self._resource.put(self._basepath + '/id/' + category +
                                   '/parent/' + parent).expect_status(202).json
+
+    def remove_parent(self, category, parent):
+        """Remove a parent from a category.
+
+        Creates the collection and taxononmy if they don't already exist.
+
+        """
+        return self._resource.delete(self._basepath + '/id/' + category +
+                                '/parent/' + parent).expect_status(202).json

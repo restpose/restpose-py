@@ -129,6 +129,27 @@ class CategoryTest(RestPoseTestCase):
                                       })
         self.assertEqual(gotdoc.values, {})
 
+        # Add a document when categories exist
         target = coll.doc_type("test")
         target.delete_doc(1)
         target.add_doc(make_doc(1), doc_id=1)
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        gotdoc2 = coll.get_doc("test", "1")
+        # Check that it's the same as a document added before the category was
+        # made.
+        self.assertEqual(gotdoc.data, gotdoc2.data)
+        self.assertEqual(gotdoc.terms, gotdoc2.terms)
+        self.assertEqual(gotdoc.values, gotdoc2.values)
+
+        # Remove an entry from a taxonomy
+        t.remove_parent('1', '2')
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        self.assertEqual(coll.taxonomies(), ['my_taxonomy'])
+        self.assertEqual(t.all(), {'1': [], '2': []})
+
+        gotdoc2 = coll.get_doc("test", "1")
+        self.assertEqual(gotdoc.data, gotdoc2.data)
+        terms = gotdoc.terms
+        del terms['c\\tA2']
+        self.assertEqual(terms, gotdoc2.terms)
+        self.assertEqual(gotdoc.values, gotdoc2.values)
