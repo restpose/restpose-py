@@ -579,6 +579,19 @@ class Collection(QueryTarget):
                           .expect_status(201)
                           .json.get('checkid'))
 
+    def taxonomies(self):
+        """Get a list of the taxonomy names.
+
+        """
+        path = self._basepath + "/category"
+        return self._resource.get(path).expect_status(200).json
+
+    def taxonomy(self, taxonomy_name):
+        """Access a taxonomy, for getting and setting its hierarchy.
+
+        """
+        return Taxonomy(self, taxonomy_name)
+
     def delete(self):
         """Delete the entire collection.
 
@@ -693,3 +706,39 @@ class CheckPoint(object):
             # the checkpoint, so we need to sleep to avoid using lots of CPU.
             import time
             time.sleep(1)
+
+class Taxonomy(object):
+    """A taxnonmy; a hierarchy of category relationships.
+
+    A collection may have many taxonomies, each identified by a name.  Each
+    taxonomy contains a set of categories, and a tree of parent-child
+    relationships (or, to use the correct mathematical terminology, a forest.
+    ie, there may be many disjoint trees of parent-child relationships).
+
+    This class allows the relationships in a taxonomy to be obtained and
+    modified.
+
+    """
+    def __init__(self, collection, taxonomy_name):
+        self._basepath = collection._basepath + '/category/' + taxonomy_name
+        self._resource = collection._resource
+
+    def all(self):
+        """Get details about the entire set of categories in the taxonomy.
+
+        This returns a dict, keyed by category ID, in which each each value is
+        a list of parent category IDs.
+
+        Raises ResourceNotFound if the collection or taxonomy are not found.
+
+        """
+        return self._resource.get(self._basepath).expect_status(200).json
+
+    def add_parent(self, category, parent):
+        """Add a parent to a category.
+
+        Creates both the category and the parent, if necessary.
+
+        """
+        return self._resource.put(self._basepath + '/id/' + category +
+                                  '/parent/' + parent).expect_status(202).json
