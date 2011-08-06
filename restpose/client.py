@@ -583,7 +583,7 @@ class Collection(QueryTarget):
         """Get a list of the taxonomy names.
 
         """
-        path = self._basepath + "/category"
+        path = self._basepath + "/taxonomy"
         return self._resource.get(path).expect_status(200).json
 
     def taxonomy(self, taxonomy_name):
@@ -720,7 +720,7 @@ class Taxonomy(object):
 
     """
     def __init__(self, collection, taxonomy_name):
-        self._basepath = collection._basepath + '/category/' + taxonomy_name
+        self._basepath = collection._basepath + '/taxonomy/' + taxonomy_name
         self._resource = collection._resource
 
     def all(self):
