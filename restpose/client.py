@@ -174,7 +174,61 @@ class FieldQuerySource(object):
         """
         return QueryField(self.fieldname, 'is', values, target=self.target)
 
-    # FIXME - add "is_descendant" and "is_or_is_descendant"
+    def is_descendant(self, categories):
+        """Create a query for field values which are categories which are
+        descendants of one of the given categories.
+
+        A document will match if at least one of the stored values for the
+        field exactly matches a descendant of the given categories.
+
+        This query type is available only for "cat" field types.
+
+        :param categories: A container holding the categories to search for.
+               As a special case, if a string is supplied, this is equivalent
+               to supplying a container holding that string.
+
+        :example:
+
+            Search for documents in which the "tag" field is a descendant of
+            a value of "cheese"
+
+            >>> query = coll.field.tag.is_descendant('cheese')
+
+            or, equivalently:
+
+            >>> query = coll.field.tag.is_descendant(['cheese'])
+
+        """
+        return QueryField(self.fieldname, 'is_descendant', categories,
+                          target=self.target)
+
+    def is_or_is_descendant(self, categories):
+        """Create a query for field values which are categories which are
+        descendants of one of the given categories.
+
+        A document will match if at least one of the stored values for the
+        field exactly matches a descendant of the given categories.
+
+        This query type is available only for "cat" field types.
+
+        :param categories: A container holding the categories to search for.
+               As a special case, if a string is supplied, this is equivalent
+               to supplying a container holding that string.
+
+        :example:
+
+            Search for documents in which the "tag" field has a value of
+            "cheese", or has a value which is a descendant of "cheese".
+
+            >>> query = coll.field.tag.is_or_is_descendant('cheese')
+
+            or, equivalently:
+
+            >>> query = coll.field.tag.is_or_is_descendant(['cheese'])
+
+        """
+        return QueryField(self.fieldname, 'is_or_is_descendant', categories,
+                          target=self.target)
 
     def __eq__(self, value):
         """Create a query for fields which exactly match the given value.
