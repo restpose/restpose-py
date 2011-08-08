@@ -153,3 +153,17 @@ class CategoryTest(RestPoseTestCase):
         del terms['c\\tA2']
         self.assertEqual(terms, gotdoc2.terms)
         self.assertEqual(gotdoc.values, gotdoc2.values)
+
+        t.add_parent('1', '2')
+        t.remove_category('2')
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        self.assertEqual(t.all(), {'1': []})
+        gotdoc2 = coll.get_doc("test", "1")
+        self.assertEqual(gotdoc.data, gotdoc2.data)
+        self.assertEqual(terms, gotdoc2.terms)
+        self.assertEqual(gotdoc.values, gotdoc2.values)
+
+        t.remove()
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        self.assertEqual(coll.taxonomies(), [])
+        self.assertRaises(ResourceNotFound, t.all)

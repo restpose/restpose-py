@@ -752,3 +752,18 @@ class Taxonomy(object):
         """
         return self._resource.delete(self._basepath + '/id/' + category +
                                 '/parent/' + parent).expect_status(202).json
+
+    def remove_category(self, category):
+        """Remove a category.
+
+        Creates the collection and taxononmy if they don't already exist.
+
+        """
+        return self._resource.delete(self._basepath + '/id/' + category) \
+            .expect_status(202).json
+
+    def remove(self):
+        """Remove this entire taxonomy.
+
+        """
+        return self._resource.delete(self._basepath).expect_status(202).json
