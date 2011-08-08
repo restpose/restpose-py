@@ -270,6 +270,12 @@ in particular ways.  For full details of the search options available in
 RestPose, see the server documentation on :ref:`restpose:searches`; this
 section will discuss how to construct each type of query in Python.
 
+* .. automethod:: restpose.client.FieldQuerySource.text
+     :noindex:
+
+* .. automethod:: restpose.client.FieldQuerySource.parse
+     :noindex:
+
 * .. automethod:: restpose.client.FieldQuerySource.is_in
      :noindex:
 
@@ -279,11 +285,15 @@ section will discuss how to construct each type of query in Python.
 * .. automethod:: restpose.client.FieldQuerySource.range
      :noindex:
 
-* .. automethod:: restpose.client.FieldQuerySource.text
+* .. automethod:: restpose.client.FieldQuerySource.is_descendant
      :noindex:
 
-* .. automethod:: restpose.client.FieldQuerySource.parse
+     See also: `Taxonomies and categories`_
+
+* .. automethod:: restpose.client.FieldQuerySource.is_or_is_descendant
      :noindex:
+
+     See also: `Taxonomies and categories`_
 
 * .. automethod:: restpose.client.FieldQuerySource.exists
      :noindex:
@@ -554,6 +564,55 @@ Another useful property is the :attr:`total_docs
 <restpose.query.Searchable.total_docs>` property, which returns the number of
 documents in the target of the search (ie, in the DocumentType or Collection
 searched).
+
+Taxonomies and categories
+-------------------------
+
+You may have noticed the :meth:`is_descendant
+<restpose.client.FieldQuerySource.is_descendant>` and
+:meth:`is_or_is_descendant
+<restpose.client.FieldQuerySource.is_or_is_descendant>` methods above.  These
+allow you to take advantage of the taxonomy feature of RestPose, which allows
+you to define a hierarchy of categories, and to search for documents in which a
+value is not only an exact match for a category, but also to search for
+documents in which a value is an exact match for any of the descendants of a
+category.
+
+The taxonomy structure (ie, the hierarchy of categories) is stored in the
+collection, and associated with a name.  To get a list of the defined
+taxonomies in a collection, you can use the :meth:`Collection.taxonomies
+<restpose.client.Collection.taxonomies>` method, which returns a list of names:
+
+.. doctest::
+
+   >>> taxonomy_names = coll.taxonomies()
+
+To build up a taxonomy, you can make a Taxonomy object from a collection:
+
+.. doctest::
+
+   >>> taxonomy = coll.taxonomy('my_taxonomy')
+
+Parent-child relationships between categories can then be built up using the
+:meth:`add_parent <restpose.client.Taxonomy.add_parent>` and
+:meth:`remove_parent <restpose.client.Taxonomy.remove_parent>` calls.
+
+.. doctest::
+
+   >>> taxonomy.add_parent('child_cat', 'parent_cat')
+   >>> taxonomy.remove_parent('child_cat', 'parent_cat')
+
+These calls can be performed at any time - any document updates which need to
+be made to reflect the new heirarchy will be performed as necessary.
+
+.. note:: If possible, it is better to put the hierarchy in place before adding
+          documents, since this will require less work in total.
+
+.. note:: Currently, the taxonomy feature is not designed to perform well with
+	  large numbers of entries in the category hierarchy (ie, more than a
+	  few hundred entries).  Performance improvements are planned, but if
+	  you need to use the feature with deep hierarchies, contact the author
+	  on IRC or email.
 
 Additional information (Facets, Term occurrence)
 ------------------------------------------------
