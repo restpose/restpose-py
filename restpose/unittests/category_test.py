@@ -30,6 +30,9 @@ def make_doc(num, id=None, type=None):
 def docdata(num):
     return listdoc(make_doc(num, id=str(num), type='test'))
 
+def idsfrom(query):
+    return ','.join(sorted(x.data['id'][0] for x in query))
+
 class CategoryTest(RestPoseTestCase):
     maxDiff = 10000
 
@@ -101,6 +104,9 @@ class CategoryTest(RestPoseTestCase):
         self.assertEqual(r[0].data, docdata(1))
         self.assertEqual(coll.taxonomies(), [])
 
+        self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '')
+        self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')), '2')
+
         # Add an entry to a taxonomy
         t = coll.taxonomy('my_taxonomy')
         self.assertRaises(ResourceNotFound, t.all)
@@ -141,12 +147,19 @@ class CategoryTest(RestPoseTestCase):
         self.assertEqual(gotdoc.terms, gotdoc2.terms)
         self.assertEqual(gotdoc.values, gotdoc2.values)
 
+        # Try a category search
+        self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '1')
+        self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')),
+                         '1,2')
+
         # Remove an entry from a taxonomy
         t.remove_parent('1', '2')
         self.assertEqual(coll.checkpoint().wait().errors, [])
         self.assertEqual(coll.taxonomies(), ['my_taxonomy'])
         self.assertEqual(t.all(), {'1': [], '2': []})
 
+        self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '')
+        self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')), '2')
         gotdoc2 = coll.get_doc("test", "1")
         self.assertEqual(gotdoc.data, gotdoc2.data)
         terms = gotdoc.terms
@@ -154,6 +167,7 @@ class CategoryTest(RestPoseTestCase):
         self.assertEqual(terms, gotdoc2.terms)
         self.assertEqual(gotdoc.values, gotdoc2.values)
 
+        # Test removing the entire taxonomy
         t.add_parent('1', '2')
         t.remove_category('2')
         self.assertEqual(coll.checkpoint().wait().errors, [])
@@ -167,3 +181,6 @@ class CategoryTest(RestPoseTestCase):
         self.assertEqual(coll.checkpoint().wait().errors, [])
         self.assertEqual(coll.taxonomies(), [])
         self.assertRaises(ResourceNotFound, t.all)
+
+        self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '')
+        self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')), '2')
