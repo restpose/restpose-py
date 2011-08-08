@@ -1,7 +1,11 @@
+0.7.2 - unreleased
+
+ - 
+
 0.7.1 - 8th August 2011
 
-  Added taxonomy hierarchy support.
+ - Added taxonomy hierarchy support.
 
 0.7.0 - 2nd August 2011
 
-  Initial release.  Functioning basic indexing and search.
+ - Initial release.  Functioning basic indexing and search.
