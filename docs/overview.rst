@@ -600,7 +600,9 @@ Parent-child relationships between categories can then be built up using the
 .. doctest::
 
    >>> taxonomy.add_parent('child_cat', 'parent_cat')
+   {}
    >>> taxonomy.remove_parent('child_cat', 'parent_cat')
+   {}
 
 These calls can be performed at any time - any document updates which need to
 be made to reflect the new heirarchy will be performed as necessary.
