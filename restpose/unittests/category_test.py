@@ -110,6 +110,18 @@ class CategoryTest(RestPoseTestCase):
         # Add an entry to a taxonomy
         t = coll.taxonomy('my_taxonomy')
         self.assertRaises(ResourceNotFound, t.all)
+        t.add_category('1')
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        self.assertEqual(coll.taxonomies(), ['my_taxonomy'])
+        self.assertEqual(t.all(), {'1': []})
+
+        # Remove an entry from a taxonomy
+        t.remove_category('1')
+        self.assertEqual(coll.checkpoint().wait().errors, [])
+        self.assertEqual(coll.taxonomies(), ['my_taxonomy'])
+        self.assertEqual(t.all(), {})
+
+        # Add a parent to an entry
         t.add_parent('1', '2')
         self.assertEqual(coll.checkpoint().wait().errors, [])
         self.assertEqual(coll.taxonomies(), ['my_taxonomy'])

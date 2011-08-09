@@ -788,6 +788,25 @@ class Taxonomy(object):
         """
         return self._resource.get(self._basepath).expect_status(200).json
 
+    def add_category(self, category):
+        """Add a category.
+
+        Creates the collection, taxononmy and category if they don't already
+        exist.
+
+        """
+        return self._resource.put(self._basepath + '/id/' + category) \
+            .expect_status(202).json
+
+    def remove_category(self, category):
+        """Remove a category.
+
+        Creates the collection and taxononmy if they don't already exist.
+
+        """
+        return self._resource.delete(self._basepath + '/id/' + category) \
+            .expect_status(202).json
+
     def add_parent(self, category, parent):
         """Add a parent to a category.
 
@@ -806,15 +825,6 @@ class Taxonomy(object):
         """
         return self._resource.delete(self._basepath + '/id/' + category +
                                 '/parent/' + parent).expect_status(202).json
-
-    def remove_category(self, category):
-        """Remove a category.
-
-        Creates the collection and taxononmy if they don't already exist.
-
-        """
-        return self._resource.delete(self._basepath + '/id/' + category) \
-            .expect_status(202).json
 
     def remove(self):
         """Remove this entire taxonomy.
