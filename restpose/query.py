@@ -213,6 +213,23 @@ class Searchable(object):
         return self._results.total_docs
 
     @property
+    def offset(self):
+        """Get the offset of the first result item (0-based).
+
+        """
+        return self._offset
+
+    @property
+    def size_requested(self):
+        """Return the requested size of the result set.
+
+        This returns None if no limit has been placed on the size of the result
+        set to return.
+
+        """
+        return self._size
+
+    @property
     def matches_lower_bound(self):
         """A lower bound on the number of matches.
 
