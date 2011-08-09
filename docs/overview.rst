@@ -604,8 +604,12 @@ Parent-child relationships between categories can then be built up using the
    >>> taxonomy.remove_parent('child_cat', 'parent_cat')
    {}
 
+Individual categories can be added or removed using the :meth:`add_category
+<restpose.client.Taxonomy.add_category>` and :meth:`remove_category
+<restpose.client.Taxonomy.remove_category>` methods.
+
 These calls can be performed at any time - any document updates which need to
-be made to reflect the new heirarchy will be performed as necessary.
+be made to reflect the new hierarchy will be performed as necessary.
 
 .. note:: If possible, it is better to put the hierarchy in place before adding
           documents, since this will require less work in total.
