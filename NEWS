@@ -2,6 +2,7 @@
 
  - Add Taxonomy.add_category() method, for adding an individual category
    to a taxonomy. 
+ - Add Taxonomy.top() and Taxonomy.get_category() methods.
  - Add Searchable.has_more().
 
 0.7.1 - 8th August 2011
