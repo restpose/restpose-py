@@ -513,6 +513,10 @@ class Document(object):
 class DocumentType(QueryTarget):
     def __init__(self, collection, doc_type):
         super(DocumentType, self).__init__()
+
+        #: The name of the document type
+        self.name = doc_type
+
         self._basepath = collection._basepath + '/type/' + doc_type
         self._resource = collection._resource
 
@@ -549,6 +553,10 @@ class DocumentType(QueryTarget):
 class Collection(QueryTarget):
     def __init__(self, server, coll_name):
         super(Collection, self).__init__()
+
+        #: The name of the collection
+        self.name = coll_name
+
         self._basepath = '/coll/' + coll_name
         self._resource = server._resource
 
@@ -774,6 +782,9 @@ class Taxonomy(object):
 
     """
     def __init__(self, collection, taxonomy_name):
+        #: The name of the taxonomy
+        self.name = taxonomy_name
+
         self._basepath = collection._basepath + '/taxonomy/' + taxonomy_name
         self._resource = collection._resource
 

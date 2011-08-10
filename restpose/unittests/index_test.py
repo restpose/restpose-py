@@ -206,3 +206,9 @@ class IndexTest(RestPoseTestCase):
         self.assertEqual(list(config['types'].keys()), ['foo'])
         coll.delete()
         self.wait(coll)
+
+    def test_get_name(self):
+        coll = Server().collection("test_coll")
+        self.assertEqual(coll.name, 'test_coll')
+        t = coll.doc_type("blurb")
+        self.assertEqual(t.name, 'blurb')
