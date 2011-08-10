@@ -613,6 +613,11 @@ Individual categories can be added or removed using the :meth:`add_category
 <restpose.client.Taxonomy.add_category>` and :meth:`remove_category
 <restpose.client.Taxonomy.remove_category>` methods.
 
+The list of top level categories (ie, those without parents) can be retrieved
+using :meth:`top <restpose.client.Taxonomy.top>`, and individual category
+details can be retrieved with :meth:`get_category
+<restpose.client.Taxonomy.get_category>`
+
 These calls can be performed at any time - any document updates which need to
 be made to reflect the new hierarchy will be performed as necessary.
 

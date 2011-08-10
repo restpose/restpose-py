@@ -799,6 +799,43 @@ class Taxonomy(object):
         """
         return self._resource.get(self._basepath).expect_status(200).json
 
+    def top(self):
+        """Get the top-level category names in the taxonomy.
+
+        This returns a dict representing the categories in the taxonomy which
+        have no parents.  The keys are the category IDs, and the values are
+        objects with the following properties:
+
+         - child_count: The number of direct child categories of this category.
+         - descendant_count: The number of descendants of this category.
+
+        Raises ResourceNotFound if the collection or taxonomy are not found.
+
+        """
+        return self._resource.get(self._basepath + '/top') \
+            .expect_status(200).json
+
+    def get_category(self, category):
+        """Get the details of a category in the taxonomy.
+
+        This returns an object with the following properties:
+
+         - "parents": A list of the category IDs of any direct parents of the
+           category.
+         - "ancestors": A list of the category IDs of any ancestors of the
+           category.
+         - "children": A list of the category IDs of any direct children of the
+           category.
+         - "descendants": A list of the category IDs of any descendants of the
+           category.
+
+        Raises ResourceNotFound if the collection, taxonomy or category are not
+        found.
+
+        """
+        return self._resource.get(self._basepath + '/id/' + category) \
+            .expect_status(200).json
+
     def add_category(self, category):
         """Add a category.
 

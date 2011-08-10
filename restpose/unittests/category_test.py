@@ -165,11 +165,31 @@ class CategoryTest(RestPoseTestCase):
         self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')),
                          '1,2')
 
+        # Get the top categories
+        self.assertEqual(coll.taxonomy('my_taxonomy').top(),
+                         {'2': {'child_count': 1, 'descendant_count': 1}})
+        self.assertEqual(coll.taxonomy('my_taxonomy').get_category('2'),
+                         {'ancestors': [], 'children': ['1'],
+                          'descendants': ['1'], 'parents': []})
+        self.assertEqual(coll.taxonomy('my_taxonomy').get_category('1'),
+                         {'ancestors': ['2'], 'children': [],
+                          'descendants': [], 'parents': ['2']})
+
         # Remove an entry from a taxonomy
         t.remove_parent('1', '2')
         self.assertEqual(coll.checkpoint().wait().errors, [])
         self.assertEqual(coll.taxonomies(), ['my_taxonomy'])
         self.assertEqual(t.all(), {'1': [], '2': []})
+        self.assertEqual(coll.taxonomy('my_taxonomy').top(),
+                         {'1': {'child_count': 0, 'descendant_count': 0},
+                          '2': {'child_count': 0, 'descendant_count': 0},
+                         })
+        self.assertEqual(coll.taxonomy('my_taxonomy').get_category('1'),
+                         {'ancestors': [], 'children': [],
+                          'descendants': [], 'parents': []})
+        self.assertEqual(coll.taxonomy('my_taxonomy').get_category('2'),
+                         {'ancestors': [], 'children': [],
+                          'descendants': [], 'parents': []})
 
         self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '')
         self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')), '2')
