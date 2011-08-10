@@ -155,6 +155,13 @@ class Searchable(object):
             if not need_recalc:
                 return
 
+        # Ensure that we're always checking for at least one more result than
+        # we're actually wanting, so that we can tell if there are more
+        # results.
+        if check_at_least is None or (check_at_least >= 0 and
+                                      check_at_least <= offset + size):
+            check_at_least = offset + size + 1
+
         s = self._build_search(offset, size, check_at_least)
         #print "search: ", s
         self._results = self._target.search(s)
@@ -166,8 +173,14 @@ class Searchable(object):
         """
         # If any results have been calculated, we have stats.
         if self._results is None:
-            self._ensure_results(self._offset, self._size,
-                                 self._check_at_least)
+            if self._size is None:
+                # Just fetch the first page
+                self._ensure_results(self._offset, self.page_size,
+                                     self._check_at_least)
+            else:
+                # Get whole slice.
+                self._ensure_results(self._offset, self._size,
+                                     self._check_at_least)
 
     def _ensure_results_contain(self, rank):
         """Ensure that the results contain the given rank.
@@ -260,6 +273,31 @@ class Searchable(object):
 
         """
         return self.matches_lower_bound == self.matches_upper_bound
+
+    @property
+    def has_more(self):
+        """Return True if there are more results after the current slice.
+
+        If a limit has been placed on the size of the result set, returns True
+        if there are more results after this limit, and False otherwise.
+
+        If no limit has been placed on the size of the result set, returns
+        False.
+
+        """
+        if self._size is None:
+            return False
+        end = self._offset + self._size
+        if self.matches_lower_bound > end:
+            return True
+        if self.matches_upper_bound <= end:
+            return False
+        # Ensure that we know if there are more results.
+        self._ensure_results(self._offset, self._size, end + 1)
+        # Lower bound is now guaranteed to be accurate if it's less than or
+        # equal to end, and guaranteed to be at least end + 1 if the actual
+        # value is end + 1 or greater.
+        return self.matches_lower_bound > end
 
     def __len__(self):
         """Get the exact number of matching documents for this Query.

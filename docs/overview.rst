@@ -546,6 +546,11 @@ an estimate and bounds on the number of matching documents.  Specifically:
   estimate produced by ``matches_estimated`` is known to be the exact number of
   matching documents.
 
+* the :attr:`has_more <restpose.query.Searchable.has_more>` property returns
+  True if there are any matches after the slice represented by the Searchable.
+  This can be useful for paginating.  (If the slice is open-ended, or the
+  Searchable hasn't been sliced, this returns False).
+
 It is possible to influence how much work Xapian performs when searching to
 calculate the number of matching documents.  This can be done using the
 :meth:`check_at_least <restpose.query.Searchable.check_at_least>` method, which
@@ -558,7 +563,7 @@ bounds will be exact if fewer documents match than the supplied number; higher
 reduce the speed at which the search is performed.
 
 Setting the ``check_at_least`` value can also be useful when calculating
-additional match information, such as counting term occurrence,  and faceting.
+additional match information, such as counting term occurrence, and faceting.
 
 Another useful property is the :attr:`total_docs
 <restpose.query.Searchable.total_docs>` property, which returns the number of

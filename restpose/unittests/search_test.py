@@ -691,3 +691,13 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(q1._query, q2._query)
         self.assertEqual(q1._target, q2._target)
         self.assertEqual(len(q1), 5)
+
+    def test_has_more(self):
+        q = self.coll.field('num').range(46, 50)
+        self.assertEqual(q.has_more, False)
+        self.assertEqual(q[:5].has_more, True)
+        self.assertEqual(q[:8].has_more, True)
+        self.assertEqual(q[:9].has_more, False)
+        self.assertEqual(q[:10].has_more, False)
+        self.assertEqual(len(q), 9)
+

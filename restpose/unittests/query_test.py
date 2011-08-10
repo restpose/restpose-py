@@ -38,11 +38,12 @@ class QueryTest(TestCase):
         self.assertEqual(q.matches_upper_bound, 0)
         self.assertEqual(q._results.offset, 0)
         self.assertEqual(q._results.size_requested, 20)
-        self.assertEqual(q._results.check_at_least, 0)
+        self.assertEqual(q._results.check_at_least, 21)
         self.assertEqual(q._results.items, [])
         self.assertEqual(q._results.info, [])
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'field': ['fieldname', 'is', '10']},
                            'size': 20,
                           })
@@ -51,6 +52,7 @@ class QueryTest(TestCase):
         qm.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'scale': {'factor': 3.14,
                              'query': {'field': ['fieldname', 'is', '10']}}},
                            'size': 20,
@@ -63,6 +65,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'or': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -76,6 +79,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'or': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -90,6 +94,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -103,6 +108,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -117,6 +123,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'xor': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -130,6 +137,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'xor': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -144,6 +152,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and_not': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -157,6 +166,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and_not': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -171,6 +181,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'filter': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -184,6 +195,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'filter': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -198,6 +210,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and_maybe': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -211,6 +224,7 @@ class QueryTest(TestCase):
         q1.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'and_maybe': [
                              {'scale': {'factor': 3.14,
                                'query': {'field': ['fieldname', 'is', '10']}
@@ -225,6 +239,7 @@ class QueryTest(TestCase):
         qm.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'scale': {'factor': 2,
                              'query': {'field': ['fieldname', 'is', '10']}}},
                            'size': 20,
@@ -234,6 +249,7 @@ class QueryTest(TestCase):
         qm.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'scale': {'factor': 0.5,
                              'query': {'field': ['fieldname', 'is', '10']}}},
                            'size': 20,
@@ -246,6 +262,7 @@ class QueryTest(TestCase):
             qm.matches_estimated
             self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'scale': {'factor': 0.5,
                              'query': {'field': ['fieldname', 'is', '10']}}},
                            'size': 20,
@@ -255,6 +272,7 @@ class QueryTest(TestCase):
         qm.matches_estimated
         self.check_target(target,
                           {
+                           'check_at_least': 21,
                            'query': {'scale': {'factor': 0.5,
                              'query': {'field': ['fieldname', 'is', '10']}}},
                            'size': 20,
@@ -276,21 +294,29 @@ class QueryTest(TestCase):
             self.check_target(target, expected)
 
         q.check_at_least(7).matches_estimated
-        chk(target, check_at_least=7)
+        # Checks for at least the first page
+        chk(target, check_at_least=21)
 
+        q.check_at_least(22).matches_estimated
+        # Checks for a whole page
+        chk(target, check_at_least=22)
+
+        q[:10].check_at_least(7).matches_estimated
+        # Checks for a whole page
+        chk(target, size=10, check_at_least=11)
 
         # Check slices with each end set or not set.
         q[10:20].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
         q[10:].matches_estimated
-        chk(target, from_=10)
+        chk(target, from_=10, check_at_least=31)
 
         q[:10].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
         q[:].matches_estimated
-        chk(target, from_=0)
+        chk(target, from_=0, check_at_least=21)
 
 
         # Check negative indexes.
@@ -302,7 +328,7 @@ class QueryTest(TestCase):
         self.assertRaises(IndexError, q.__getitem__, slice(0, None, 0))
         self.assertRaises(IndexError, q.__getitem__, slice(0, None, 2))
         q[0::1].matches_estimated
-        chk(target, from_=0)
+        chk(target, from_=0, check_at_least=21)
 
         # Check invalid index
         self.assertRaises(TypeError, q.__getitem__, "bad index")
@@ -310,101 +336,101 @@ class QueryTest(TestCase):
 
         # Check all types of subslice for a slice with stat and end set.
         q[10:20][3:5].matches_estimated
-        chk(target, from_=13, size=2)
+        chk(target, from_=13, size=2, check_at_least=16)
 
         q[10:20][3:10].matches_estimated
-        chk(target, from_=13, size=7)
+        chk(target, from_=13, size=7, check_at_least=21)
 
         q[10:20][3:15].matches_estimated
-        chk(target, from_=13, size=7)
+        chk(target, from_=13, size=7, check_at_least=21)
 
         q[10:20][3:].matches_estimated
-        chk(target, from_=13, size=7)
+        chk(target, from_=13, size=7, check_at_least=21)
 
         q[10:20][:5].matches_estimated
-        chk(target, from_=10, size=5)
+        chk(target, from_=10, size=5, check_at_least=16)
 
         q[10:20][:10].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
         q[10:20][:20].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
         q[10:20][:].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
 
         # Check all types of subslice for a slice with only the start set.
         q[10:][3:5].matches_estimated
-        chk(target, from_=13, size=2)
+        chk(target, from_=13, size=2, check_at_least=16)
 
         q[10:][3:10].matches_estimated
-        chk(target, from_=13, size=7)
+        chk(target, from_=13, size=7, check_at_least=21)
 
         q[10:][3:15].matches_estimated
-        chk(target, from_=13, size=12)
+        chk(target, from_=13, size=12, check_at_least=26)
 
         q[10:][3:].matches_estimated
-        chk(target, from_=13)
+        chk(target, from_=13, check_at_least=34)
 
         q[10:][:5].matches_estimated
-        chk(target, from_=10, size=5)
+        chk(target, from_=10, size=5, check_at_least=16)
 
         q[10:][:10].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
         q[10:][:15].matches_estimated
-        chk(target, from_=10, size=15)
+        chk(target, from_=10, size=15, check_at_least=26)
 
         q[10:][:20].matches_estimated
-        chk(target, from_=10, size=20)
+        chk(target, from_=10, size=20, check_at_least=31)
 
         q[10:][:].matches_estimated
-        chk(target, from_=10)
+        chk(target, from_=10, check_at_least=31)
 
 
         # Check all types of subslice for a slice with only the end set.
         q[:10][3:5].matches_estimated
-        chk(target, from_=3, size=2)
+        chk(target, from_=3, size=2, check_at_least=6)
 
         q[:10][3:10].matches_estimated
-        chk(target, from_=3, size=7)
+        chk(target, from_=3, size=7, check_at_least=11)
 
         q[:10][3:15].matches_estimated
-        chk(target, from_=3, size=7)
+        chk(target, from_=3, size=7, check_at_least=11)
 
         q[:10][3:].matches_estimated
-        chk(target, from_=3, size=7)
+        chk(target, from_=3, size=7, check_at_least=11)
 
         q[:10][:5].matches_estimated
-        chk(target, from_=0, size=5)
+        chk(target, from_=0, size=5, check_at_least=6)
 
         q[:10][:10].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
         q[:10][:15].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
         q[:10][:20].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
         q[:10][:].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
 
         # Check all types of subslice for a slice with neither start or end
         # set.
         q[:][10:20].matches_estimated
-        chk(target, from_=10, size=10)
+        chk(target, from_=10, size=10, check_at_least=21)
 
         q[:][10:].matches_estimated
-        chk(target, from_=10)
+        chk(target, from_=10, check_at_least=31)
 
         q[:][:10].matches_estimated
-        chk(target, from_=0, size=10)
+        chk(target, from_=0, size=10, check_at_least=11)
 
         q[:][:].matches_estimated
-        chk(target, from_=0)
+        chk(target, from_=0, check_at_least=21)
 
     def test_no_target(self):
         """Test behaviour of a query for which no target is set.
