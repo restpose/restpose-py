@@ -217,3 +217,56 @@ class CategoryTest(RestPoseTestCase):
 
         self.assertEqual(idsfrom(coll.field.cat.is_descendant('2')), '')
         self.assertEqual(idsfrom(coll.field.cat.is_or_is_descendant('2')), '2')
+
+    def test_cat_hier_mod(self):
+        """Test that some modifications of the hierarchy don't cause problems.
+
+        Suppose we have categories A, B, C, D.
+         - A is made parent of B and C
+         - B is made a parent of D
+         - C is made a parent of D
+         - C is removed as a parent of D
+         - Test that D is still marked as a descendant of A
+
+        """
+        coll = Server().collection("test_coll")
+        target = coll.doc_type("test2")
+        target.add_doc({'cat': 'D'}, doc_id='1')
+        tax = coll.taxonomy('my_taxonomy')
+        tax.add_parent('B', 'A')
+        tax.add_parent('C', 'A')
+        tax.add_parent('D', 'B')
+        tax.add_parent('D', 'C')
+
+        self.assertEqual(coll.checkpoint().wait().total_errors, 0)
+        doc = target.get_doc('1')
+        self.assertEqual(doc.terms, {
+            '!\\ttest2': {},
+            '#\\tFcat': {},
+            '#\\tN': {},
+            '#\\tNcat': {},
+            '\\ttest2\\t1': {},
+            'c\\tAA': {},
+            'c\\tAB': {},
+            'c\\tAC': {},
+            'c\\tCD': {},
+        })
+        tax.remove_parent('D', 'C')
+        self.assertEqual(coll.checkpoint().wait().total_errors, 0)
+
+        doc = target.get_doc('1')
+        self.assertEqual(doc.terms, {
+            '!\\ttest2': {},
+            '#\\tFcat': {},
+            '#\\tN': {},
+            '#\\tNcat': {},
+            '\\ttest2\\t1': {},
+            'c\\tAA': {},
+            'c\\tAB': {},
+            'c\\tCD': {},
+        })
+
+        self.assertEqual(coll.checkpoint().wait().total_errors, 0)
+        target.delete_doc('1')
+        tax.remove()
+        self.assertEqual(coll.checkpoint().wait().total_errors, 0)
