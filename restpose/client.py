@@ -537,14 +537,14 @@ class DocumentType(QueryTarget):
         else:
             resp = self._resource.post(path, payload=doc)
 
-        return resp.expect_status(202)
+        return resp.expect_status(202).json
 
     def delete_doc(self, doc_id):
         """Delete a document with this type from the collection.
 
         """
         path = '%s/id/%s' % (self._basepath, doc_id)
-        return self._resource.delete(path).expect_status(202)
+        return self._resource.delete(path).expect_status(202).json
 
     def get_doc(self, doc_id):
         return Document(None, self, doc_id)
@@ -581,7 +581,7 @@ class Collection(QueryTarget):
     @config.setter
     def config(self, value):
         self._resource.put(self._basepath + '/config', payload=value) \
-            .expect_status(202)
+            .expect_status(202).json
 
     def add_doc(self, doc, doc_type=None, doc_id=None):
         """Add a document to the collection.
@@ -605,14 +605,14 @@ class Collection(QueryTarget):
         else:
             resp = self._resource.post(path, payload=doc)
 
-        return resp.expect_status(202)
+        return resp.expect_status(202).json
 
     def delete_doc(self, doc_type, doc_id):
         """Delete a document from the collection.
 
         """
         path = '%s/type/%s/id/%s' % (self._basepath, doc_type, doc_id)
-        return self._resource.delete(path).expect_status(202)
+        return self._resource.delete(path).expect_status(202).json
 
     def get_doc(self, doc_type, doc_id):
         """Get a document from the collection.
@@ -658,7 +658,7 @@ class Collection(QueryTarget):
         """Delete the entire collection.
 
         """
-        return self._resource.delete(self._basepath).expect_status(202)
+        return self._resource.delete(self._basepath).expect_status(202).json
 
 
 class CheckPoint(object):
