@@ -4,6 +4,7 @@
    to a taxonomy. 
  - Add Taxonomy.top() and Taxonomy.get_category() methods.
  - Add Searchable.has_more().
+ - Fix issue with connections not being reused when adding documents.
 
 0.7.1 - 8th August 2011
 
