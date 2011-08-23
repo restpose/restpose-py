@@ -1,4 +1,4 @@
-0.7.2 - unreleased
+0.7.2 - 24th August 2011
 
  - Add Taxonomy.add_category() method, for adding an individual category
    to a taxonomy. 
