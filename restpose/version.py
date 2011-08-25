@@ -12,7 +12,7 @@ dev_release = ""
 #: The version of this restpose client, as a tuple of numbers.
 #: This does not include information about whether this is a development
 #: release.
-version_info = (0, 7, 2)
+version_info = (0, 7, 3)
 
 #: The version of this restpose client, as a string.
 #: This will have a 

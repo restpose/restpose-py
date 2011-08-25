@@ -1,3 +1,8 @@
+0.7.3 - 25th August 2011
+
+ - Fixes to packaging; no longer require import of restpose to work to be
+   able to run setup.py, and include install dependency on six.
+
 0.7.2 - 24th August 2011
 
  - Add Taxonomy.add_category() method, for adding an individual category
