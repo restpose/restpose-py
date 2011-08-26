@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup, find_packages
 
 setup(name="Restpose",
-      version='0.7.3',
+      version='0.7.4',
       packages=find_packages(),
       include_package_data=True,
       author='Richard Boulton',
@@ -27,7 +27,6 @@ setup(name="Restpose",
         'six',
       ],
       setup_requires=[
-        'nose>=0.11',
       ],
       tests_require=[
         'coverage',

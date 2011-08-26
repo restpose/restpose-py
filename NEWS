@@ -1,3 +1,8 @@
+0.7.4 - 26th August 2011
+
+ - More packaging tweaks; no longer require nose at all, other than in
+   requirements.txt.
+
 0.7.3 - 25th August 2011
 
  - Fixes to packaging; no longer require import of restpose to work to be
