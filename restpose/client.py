@@ -438,6 +438,8 @@ class QueryTarget(object):
         #: Pseudo field for making queries across all fields.
         self.any_field = FieldQuerySource(fieldname=None, target=self)
 
+        self._realiser = None
+
     def all(self):
         """Create a query which matches all documents."""
         return QueryAll(target=self)
@@ -454,6 +456,16 @@ class QueryTarget(object):
         """
         return q.set_target(self)
 
+    def set_realiser(self, realiser):
+        """Set the function to get objects associated with results.
+
+        This may be overridden for a particular search by setting a realiser on
+        a Searchable.
+
+        """
+        self._realiser = realiser
+        return self
+
     def search(self, search):
         """Perform a search.
 
@@ -463,11 +475,13 @@ class QueryTarget(object):
         """
         if hasattr(search, '_build_search'):
             body = search._build_search()
+            realiser = search._realiser
         else:
             body = search
+            realiser = None
         result = self._resource.post(self._basepath + "/search",
                                      payload=body).json
-        return SearchResults(result)
+        return SearchResults(result, realiser or self._realiser)
 
 
 class Document(object):

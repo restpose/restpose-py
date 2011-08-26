@@ -58,6 +58,7 @@ class Searchable(object):
     _info = None
     _order_by = None
     _results = None
+    _realiser = None
 
     def __init__(self, target):
         """Create a new Searchable.
@@ -67,6 +68,18 @@ class Searchable(object):
 
         """
         self._target = target
+
+    def set_realiser(self, realiser):
+        """Set the function to get objects associated with results.
+
+        Overrides the default realiser for the query target.
+
+        """
+        if self._realiser is realiser:
+            return self
+        result = copy.copy(self)
+        result._realiser = realiser
+        return result
 
     def set_target(self, target):
         """Return a searchable, with the target set.
@@ -892,9 +905,30 @@ class TerminalQuery(Searchable):
 
 
 class SearchResult(object):
-    def __init__(self, rank, data):
+    def __init__(self, rank, data, results):
         self.rank = rank
         self.data = data
+        self._object = None
+        self._results = results
+
+    @property
+    def object(self):
+        """Get the object associated with this result.
+
+        Requires an object generator to have been set, or the object to have
+        been explicitly set earlier.
+
+        """
+        if self._object is None:
+            self._results._realise(self.rank)
+        return self._object
+
+    @object.setter
+    def object(self, object):
+        """Set the object for this result.
+
+        """
+        self._object = object
 
     def __str__(self):
         return 'SearchResult(rank=%d, data=%s)' % (
@@ -906,7 +940,7 @@ class SearchResults(object):
     """The results returned from the server when performing a search.
 
     """
-    def __init__(self, raw):
+    def __init__(self, raw, realiser=None):
         #: The raw results returned from the server.
         self._raw = raw
 
@@ -938,6 +972,24 @@ class SearchResults(object):
         #: An upper bound on the number of matches.
         self.matches_upper_bound = raw.get('matches_upper_bound', 0)
 
+        #: The function used to create objects associated with results.
+        self._realiser = realiser
+
+    def set_realiser(self, realiser):
+        """Set the function to get objects associated with results.
+
+        This function will be passed two lists of result items:
+
+         - first, a list of result items which must be given objects to
+           associate with them.
+         - second, a list of result items which it is desirable to associate
+           an object with; this can be used to perform bulk lookups.
+
+        And should assign the object to the object property of each of these.
+
+        """
+        self._realiser = realiser
+
     @property
     def estimate_is_exact(self):
         """Return True if the value returned by matches_estimated is exact,
@@ -950,9 +1002,24 @@ class SearchResults(object):
     def items(self):
         """The matching result items."""
         if self._items is None:
-            self._items = [SearchResult(rank, data) for (rank, data) in
+            self._items = [SearchResult(rank, data, self) for (rank, data) in
                 enumerate(self._raw.get('items', []), self.offset)]
         return self._items
+
+    def _realise(self, rank):
+        """Realise the object for the result at a given rank.
+
+        ie; use the object generator to make the corresponding object.
+
+        May realise other objects, too.
+
+        """
+        needed_item = self.items[rank - self.offset]
+        if needed_item._object is not None:
+            return
+        needed = [needed_item]
+        wanted = [item for item in self.items if item._object is None]
+        self._realiser(needed, wanted)
 
     @property
     def info(self):
