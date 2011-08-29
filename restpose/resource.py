@@ -96,8 +96,7 @@ class RestPoseResource(restkit.Resource):
         :param headers: A dictionary of headers.  If not already set, Accept
                and User-Agent headers will be added to this, and if there is a
                JSON payload, the Content-Type will be set to application/json.
-        :param params_dict: A dictionary of parameters to add to the requst
-               URI.
+        :param params: A dictionary of parameters to add to the request URI.
 
         """
 
