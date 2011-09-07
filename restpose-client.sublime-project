@@ -1,20 +1,24 @@
 {
-	"folders": [
-		{
-			"path": "docs",
-			"folder_exclude_patterns": ["build"]
-		},
-		{
-			"path": "restpose",
-			"folder_exclude_patterns": ["__pycache__"]
-		}
-	],
-	"build_systems": [
-		{
-			"name": "AllTests",
-			"working_dir": "${project_path}",
-			"cmd": ["./alltests.py"],
-			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)"
-		}
-	]
+    "folders": [
+        {
+            "path": "docs",
+            "folder_exclude_patterns": ["build"]
+        },
+        {
+            "path": "restpose",
+            "folder_exclude_patterns": ["__pycache__"]
+        }
+    ],
+    "settings": {
+        "use_tab_stops": true,
+        "translate_tabs_to_spaces": true
+    },
+    "build_systems": [
+        {
+            "name": "AllTests",
+            "working_dir": "${project_path}",
+            "cmd": ["${project_path}/alltests.py"],
+            "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)"
+        }
+    ]
 }
