@@ -2,3 +2,4 @@
 /.coverage
 /cover
 /docs/build
+*.sublime-workspace
