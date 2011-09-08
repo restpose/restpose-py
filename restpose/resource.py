@@ -83,7 +83,7 @@ class RestPoseResource(restkit.Resource):
 
         """
         client_opts['response_class'] = RestPoseResponse
-        restkit.Resource.__init__(self, uri=uri, **client_opts)
+        super(RestPoseResource, self).__init__(uri=uri, **client_opts)
 
     def request(self, method, path=None, payload=None, headers=None, **params):
         """Perform a request.
@@ -111,9 +111,10 @@ class RestPoseResource(restkit.Resource):
                 headers.setdefault('Content-Type', 'application/json')
 
         try:
-            resp = restkit.Resource.request(self, method, path=path,
-                                            payload=payload, headers=headers,
-                                            **params)
+            resp = super(RestPoseResource, self).request(
+                method, path=path,
+                payload=payload, headers=headers,
+                **params)
         except restkit.ResourceError:
             e = sys.exc_info()[1] # Python 2/3 compatibility
             # Unpack any errors which are in JSON format.

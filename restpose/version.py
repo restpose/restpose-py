@@ -5,7 +5,7 @@
 """Version information.
 
 """
-
+import six
 #: The development release suffix.  Will be an empty string for releases.
 dev_release = "dev"
 
@@ -16,4 +16,4 @@ version_info = (0, 7, 6)
 
 #: The version of this restpose client, as a string.
 #: This will have a 
-__version__ =  ".".join(map(str, version_info)) + dev_release
+__version__ =  ".".join(map(six.text_type, version_info)) + dev_release
