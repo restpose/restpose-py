@@ -18,7 +18,6 @@ import six
 from .resource import RestPoseResource
 from .query import Query, QueryAll, QueryNone, QueryField, QueryMeta, \
                    SearchResults
-import query
 from .errors import RestPoseError, CheckPointExpiredError
 
 class Server(object):
@@ -29,6 +28,24 @@ class Server(object):
     """
 
     _resource_class = RestPoseResource
+
+    #: Type of waiting to use for calls which modify state.
+    #: Possible options are:
+    #:
+    #:  - `none`: Try pushing tasks onto the queue once, and then return
+    #:    immediately, raising a RequestFailed exception if the queue is full.
+    #:  - `push`: Push tasks onto the queue, blocking until the task is
+    #:    pushed onto the queue.  Errors which occur in processing or indexing
+    #:    can be accessed using checkpoints.
+    #:  - `process`: Push tasks onto the queue, blocking until the task has
+    #:    been processed.  Errors which occur during processing will be
+    #:    returned; errors which occur during processing or indexing can be
+    #:    accessed using checkpoints.
+    #:  - `complete`: Push tasks onto the queue, blocking until the task has
+    #:    been fully handled by processing and indexing.  Errors which occur
+    #:    during processing or indexing will be returned, and can also be
+    #:    accessed using checkpoints.
+    wait = "process"
 
     def __init__(self, uri='http://127.0.0.1:7777',
                  resource_class=None,
@@ -479,8 +496,9 @@ class QueryTarget(object):
         else:
             body = search
             realiser = None
-        result = self._resource.post(self._basepath + "/search",
-                                     payload=body).json
+        result = self._resource \
+            .post(self._basepath + "/search", payload=body) \
+            .expect_status(200).json
         return SearchResults(result, realiser or self._realiser)
 
 
@@ -493,7 +511,8 @@ class Document(object):
         else:
             # doc_type should be a string.
             self._resource = collection._resource
-            self._path = collection._basepath + '/type/' + doc_type + '/id/' + doc_id
+            self._path = collection._basepath + '/type/' + doc_type + \
+                         '/id/' + doc_id
         self._data = None
         self._terms = None
         self._values = None
@@ -532,10 +551,19 @@ class DocumentType(QueryTarget):
         self.name = doc_type
 
         self._basepath = collection._basepath + '/type/' + doc_type
+        self._server = collection._server
         self._resource = collection._resource
 
-    def add_doc(self, doc, doc_id=None):
+    def add_doc(self, doc, doc_id=None, wait=None):
         """Add a document to the collection.
+
+        :param doc: The document to add (as a dictionary of fields).
+
+        :param doc_id: The ID of the document to add.  If omitted, the ID must
+               be present in the document.
+
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
 
         """
         path = self._basepath
@@ -546,19 +574,22 @@ class DocumentType(QueryTarget):
         else:
             path += '/id/%s' % doc_id
 
+        wait = wait or self._server.wait
         if use_put:
-            resp = self._resource.put(path, payload=doc)
+            resp = self._resource.put(path, payload=doc, wait=wait)
         else:
-            resp = self._resource.post(path, payload=doc)
+            resp = self._resource.post(path, payload=doc, wait=wait)
 
         return resp.expect_status(202).json
 
-    def delete_doc(self, doc_id):
+    def delete_doc(self, doc_id, wait=None):
         """Delete a document with this type from the collection.
 
         """
         path = '%s/id/%s' % (self._basepath, doc_id)
-        return self._resource.delete(path).expect_status(202).json
+        return self._resource \
+            .delete(path, wait=wait or self._server.wait) \
+            .expect_status(202).json
 
     def get_doc(self, doc_id):
         return Document(None, self, doc_id)
@@ -573,6 +604,7 @@ class Collection(QueryTarget):
 
         self._basepath = '/coll/' + coll_name
         self._resource = server._resource
+        self._server = server
 
     def doc_type(self, doc_type):
         return DocumentType(self, doc_type)
@@ -590,15 +622,19 @@ class Collection(QueryTarget):
 
         """
         return self._resource.get(self._basepath + '/config') \
-              .expect_status(200).json
+            .expect_status(200).json
 
     @config.setter
     def config(self, value):
-        self._resource.put(self._basepath + '/config', payload=value) \
+        self._resource.put(self._basepath + '/config', payload=value,
+                           wait=self._server.wait) \
             .expect_status(202).json
 
-    def add_doc(self, doc, doc_type=None, doc_id=None):
+    def add_doc(self, doc, doc_type=None, doc_id=None, wait=None):
         """Add a document to the collection.
+
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
 
         """
         path = self._basepath
@@ -615,18 +651,23 @@ class Collection(QueryTarget):
             path += '/id/%s' % doc_id
 
         if use_put:
-            resp = self._resource.put(path, payload=doc)
+            meth = self._resource.put
         else:
-            resp = self._resource.post(path, payload=doc)
+            meth = self._resource.post
 
-        return resp.expect_status(202).json
+        wait = wait or self._server.wait
+        return meth(path, payload=doc, wait=wait).expect_status(202).json
 
-    def delete_doc(self, doc_type, doc_id):
+    def delete_doc(self, doc_type, doc_id, wait=None):
         """Delete a document from the collection.
+
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
 
         """
         path = '%s/type/%s/id/%s' % (self._basepath, doc_type, doc_id)
-        return self._resource.delete(path).expect_status(202).json
+        wait = wait or self._server.wait
+        return self._resource.delete(path, wait=wait).expect_status(202).json
 
     def get_doc(self, doc_type, doc_id):
         """Get a document from the collection.
@@ -634,7 +675,7 @@ class Collection(QueryTarget):
         """
         return Document(self, doc_type, doc_id)
 
-    def checkpoint(self, commit=True):
+    def checkpoint(self, commit=True, wait=None):
         """Set a checkpoint on the collection.
 
         This creates a resource on the server which can be queried to detect
@@ -643,9 +684,14 @@ class Collection(QueryTarget):
         checkpoint, and no updates sent after the checkpoint will be processed
         before indexing reaches the checkpoint.
 
+        :param commit: If True, the checkpoint will cause a commit to happen.
+
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
+
         """
         path = self._basepath + "/checkpoint"
-        params_dict = {}
+        params_dict = {'wait': wait or self._server.wait}
         if commit:
             params_dict['commit'] = '1'
         else:
@@ -653,7 +699,7 @@ class Collection(QueryTarget):
         return CheckPoint(self, self._resource
                           .post(path, params_dict=params_dict)
                           .expect_status(201)
-                          .json.get('checkid'))
+                          .json)
 
     def taxonomies(self):
         """Get a list of the taxonomy names.
@@ -679,8 +725,16 @@ class CheckPoint(object):
     """A checkpoint, used to check the progress of indexing.
 
     """
-    def __init__(self, collection, check_id):
-        self._check_id = check_id
+    def __init__(self, collection, response):
+        """Create a CheckPoint object.
+
+        :param collection: The collection that the checkpoint is for.
+
+        :param response: The response returned by the server when creating the
+               checkpoint.
+
+        """
+        self._check_id = response.get('checkid')
         self._basepath = collection._basepath + '/checkpoint/' + self._check_id
         self._resource = collection._resource
 
@@ -801,6 +855,7 @@ class Taxonomy(object):
 
         self._basepath = collection._basepath + '/taxonomy/' + taxonomy_name
         self._resource = collection._resource
+        self._server = collection._server
 
     def all(self):
         """Get details about the entire set of categories in the taxonomy.
@@ -850,46 +905,71 @@ class Taxonomy(object):
         return self._resource.get(self._basepath + '/id/' + category) \
             .expect_status(200).json
 
-    def add_category(self, category):
+    def add_category(self, category, wait=None):
         """Add a category.
 
         Creates the collection, taxononmy and category if they don't already
         exist.
 
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
+
         """
-        return self._resource.put(self._basepath + '/id/' + category) \
+        return self._resource \
+            .put(self._basepath + '/id/' + category,
+                 wait = wait or self._server.wait) \
             .expect_status(202).json
 
-    def remove_category(self, category):
+    def remove_category(self, category, wait=None):
         """Remove a category.
 
         Creates the collection and taxononmy if they don't already exist.
 
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
+
         """
-        return self._resource.delete(self._basepath + '/id/' + category) \
+        return self._resource \
+            .delete(self._basepath + '/id/' + category,
+                    wait = wait or self._server.wait) \
             .expect_status(202).json
 
-    def add_parent(self, category, parent):
+    def add_parent(self, category, parent, wait=None):
         """Add a parent to a category.
 
         Creates the collection, taxononmy, category and the parent, if
         necessary.
 
-        """
-        return self._resource.put(self._basepath + '/id/' + category +
-                                  '/parent/' + parent).expect_status(202).json
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
 
-    def remove_parent(self, category, parent):
+        """
+        return self._resource \
+            .put(self._basepath + '/id/' + category + '/parent/' + parent,
+                 wait = wait or self._server.wait) \
+            .expect_status(202).json
+
+    def remove_parent(self, category, parent, wait=None):
         """Remove a parent from a category.
 
         Creates the collection and taxononmy if they don't already exist.
 
-        """
-        return self._resource.delete(self._basepath + '/id/' + category +
-                                '/parent/' + parent).expect_status(202).json
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
 
-    def remove(self):
+        """
+        return self._resource \
+            .delete(self._basepath + '/id/' + category + '/parent/' + parent,
+                    wait = wait or self._server.wait) \
+            .expect_status(202).json
+
+    def remove(self, wait=None):
         """Remove this entire taxonomy.
 
+        :param wait: The type of waiting to use.  Defaults to that specified by
+               server.wait.
+
         """
-        return self._resource.delete(self._basepath).expect_status(202).json
+        return self._resource \
+            .delete(self._basepath, wait = wait or self._server.wait) \
+            .expect_status(202).json
