@@ -14,10 +14,7 @@ by the RestPose server.
 from .version import __version__
 from .errors import RestPoseError
 import restkit
-try:
-    import simplejson as json
-except ImportError: # pragma: no cover
-    import json
+import json
 import six
 import sys
 
