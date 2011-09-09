@@ -553,6 +553,7 @@ class DocumentType(QueryTarget):
         self._basepath = collection._basepath + '/type/' + doc_type
         self._server = collection._server
         self._resource = collection._resource
+        self._realiser = collection._realiser
 
     def add_doc(self, doc, doc_id=None, wait=None):
         """Add a document to the collection.
