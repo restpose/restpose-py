@@ -174,7 +174,7 @@ class IndexTest(RestPoseTestCase):
         id = c.check_id
         self.assertTrue(len(id) > 10)
 
-        c = CheckPoint(coll, 'fake_checkid')
+        c = CheckPoint(coll, {'checkid': 'fake_checkid'})
         self.assertEqual(c.check_id, 'fake_checkid')
         self.assertRaises(CheckPointExpiredError, getattr, c, 'reached')
         self.assertRaises(CheckPointExpiredError, getattr, c, 'errors')
