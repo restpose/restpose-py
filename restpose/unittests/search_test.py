@@ -55,7 +55,7 @@ class SearchTest(RestPoseTestCase):
 
     # Expected items for tests which return a single result
     expected_items_single = [
-        SearchResult(rank=0, data=expected_item_data),
+        SearchResult(rank=0, data=expected_item_data, results="dummy"),
     ]
 
     def check_results(self, results, offset=0, size_requested=None, check_at_least=0,
