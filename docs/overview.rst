@@ -686,3 +686,26 @@ information.  Note that calculating this is significantly more expensive than
 calculating the pure occurrence counts, so in a large system you might well
 want to start with small limits, and gradually increase the counts until
 performance is no longer acceptable.
+
+Realisers: associating search results with external objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In many situations, the search index is built from objects which are stored in
+an external database.  When this is the case, it is desirable to be able to
+associate a search result with the object in the database which it represents.
+For example, in a Django project, a search index might be built up by
+processing objects from the Django ORM, and it would be desirable for templates
+to be able to access the appropriate ORM object directly, rather than just
+being able to access the fields stored in the search engine.
+
+This can of course be done manually, but the RestPose client provides some
+support to make this cleaner and more convenient.  In brief: searches can be
+provided with a "realiser" function, which is called when neccessary to look up
+the objects associated with a set of results; these objects can then be
+accessed via the `SearchResult.object` property.
+
+FIXME - document how to set realiser functions
+
+FIXME - document what realiser functions need to do
+
+FIXME - give an example realiser for use with Django
