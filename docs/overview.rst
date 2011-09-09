@@ -704,8 +704,8 @@ provided with a "realiser" function, which is called when neccessary to look up
 the objects associated with a set of results; these objects can then be
 accessed via the `SearchResult.object` property.
 
-FIXME - document how to set realiser functions
+.. todo:: document how to set realiser functions
 
-FIXME - document what realiser functions need to do
+.. todo:: document what realiser functions need to do
 
-FIXME - give an example realiser for use with Django
+.. todo:: give an example realiser for use with Django
