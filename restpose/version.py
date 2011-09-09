@@ -15,5 +15,5 @@ dev_release = "dev"
 version_info = (0, 7, 6)
 
 #: The version of this restpose client, as a string.
-#: This will have a 
+#: This will have a development release suffix for development releases.
 __version__ =  ".".join(map(six.text_type, version_info)) + dev_release
