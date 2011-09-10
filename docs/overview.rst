@@ -709,3 +709,31 @@ accessed via the `SearchResult.object` property.
 .. todo:: document what realiser functions need to do
 
 .. todo:: give an example realiser for use with Django
+
+
+Getting a section of search results based on a particular document
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes, it's useful to be able to get the section of a search result set
+containing a particular document, rather than just a section of a result set
+based on an offset.  For example, imagine you're providing an interface which
+allows users to page through a resultset where documents are constantly being
+added to the underlying database, so additional documents may be added at any
+time.
+
+In this situation, it may be better to ask for the results which follow a
+particular document, rather than to ask for the next page of results by a fixed
+offset.  This is particularly true if documents are being returned sorted by
+most-recent first; using this technique.
+
+Note that this interface can also be used to get the rank of a given document
+in a set of search results, without having to iterate through the search
+results on the client side.
+
+To get a section of results based on a given document, you can use the
+:meth:`fromdoc <restpose.query.Searchable.fromdoc>` method on a Searchable.
+
+Note that it is not valid to call fromdoc on a resultset which has already been
+sliced; doing so will raise a ValueError.  Also, if the fromdoc specified does
+not exist, or is not in the results of the query, the query will fail when
+executed, raising a RequestFailed error.
