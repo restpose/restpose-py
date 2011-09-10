@@ -55,6 +55,7 @@ class Searchable(object):
     _offset = 0
     _size = None
     _check_at_least = 0
+    _fromdoc = None
     _info = None
     _order_by = None
     _results = None
@@ -132,6 +133,9 @@ class Searchable(object):
             check_at_least = self._check_at_least
         if check_at_least:
             body['check_at_least'] = check_at_least
+
+        if self._fromdoc is not None:
+            body['fromdoc'] = self._fromdoc
 
         if self._info is not None:
             body['info'] = self._info
@@ -243,6 +247,9 @@ class Searchable(object):
         """Get the offset of the first result item (0-based).
 
         """
+        if self._fromdoc is not None:
+            raise ValueError("result set offset is not meaningful when "
+                             "using fromdoc")
         return self._offset
 
     @property
@@ -370,9 +377,46 @@ class Searchable(object):
         size = self._size
         if size is not None and key >= size:
             raise IndexError("Index out of range of slice of results")
-        rank = self._offset + key
-        self._ensure_results_contain(rank)
-        return self._results.at_rank(rank)
+        if self._fromdoc is None:
+            rank = self._offset + key
+            self._ensure_results_contain(rank)
+            return self._results.at_rank(rank)
+        else:
+            assert self._offset == 0
+            self._ensure_results(0, size, self._check_at_least)
+            return self._results.items[key]
+
+    def fromdoc(self, doc_type, doc_id, offset = 0, size = 0,
+                fromdoc_pagesize = None):
+        """Get a subset of the result set, based on the position of a
+        particular base document.
+
+        :param doc_type: The type of the base document.
+        :param doc_id: The ID of the base document.
+        :param offset: The position offset for the start of the results to
+               return.  This may be negative to return results before the base
+               document; if this would result in trying to return results with
+               a rank less than zero, the calculated rank will be clipped to
+               zero.
+        :param size: The number of results to attempt to return.
+        :param fromdoc_pagesize: The number of results to calculate at a time
+               internally when working out what position the base document is
+               at.  This may usually be left as the server default, but can be
+               varied for performance reasons.
+
+        """
+        if self._offset != 0 or self._size is not None:
+            raise ValueError("fromdoc can not be used with a sliced result set")
+        result = TerminalQuery(self)
+        result._fromdoc = {
+            'type': doc_type,
+            'id': doc_id,
+            'from': offset,
+        }
+        if fromdoc_pagesize:
+            result._fromdoc['pagesize'] = fromdoc_pagesize
+        result._size = int(size)
+        return result
 
     def check_at_least(self, check_at_least):
         """Set the check_at_least value.
@@ -859,6 +903,7 @@ class TerminalQuery(Searchable):
         self._offset = orig._offset
         self._size = orig._size
         self._check_at_least = orig._check_at_least
+        self._fromdoc = copy.copy(orig._fromdoc)
         self._info = copy.copy(orig._info)
         self._order_by = copy.copy(orig._order_by)
         if slice is not None:
@@ -888,8 +933,10 @@ class TerminalQuery(Searchable):
             stop = None
 
         # Set the starting offset.
-        oldstart = self._offset
-        self._offset = start + oldstart
+        if self._fromdoc is None:
+            self._offset = start + self._offset
+        else:
+            self._fromdoc['from'] = self._fromdoc['from'] + start
 
         # Update the size.
         oldsize = self._size

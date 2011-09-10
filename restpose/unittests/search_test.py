@@ -701,3 +701,20 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(q[:10].has_more, False)
         self.assertEqual(len(q), 9)
 
+    def test_fromdoc(self):
+        q = self.coll.doc_type('num').field.num.range(10, 100).order_by('num')
+        self.assertEqual(len(q), 91)
+        q1 = q.fromdoc('num', '60', -5, 10)
+        self.assertEqual(len(q1), 10)
+        self.assertEqual(q1[0].rank, 45)
+        self.assertEqual(q1[0].data['num'][0], 55)
+        q2 = q1[5:]
+        self.assertEqual(len(q2), 5)
+        self.assertEqual(q2[0].rank, 50)
+        self.assertEqual(q2[0].data['num'][0], 60)
+        q2 = q1[5:6]
+        self.assertEqual(len(q2), 1)
+        self.assertEqual(q2[0].rank, 50)
+        self.assertEqual(q2[0].data['num'][0], 60)
+        self.assertRaises(ValueError, q[:10].fromdoc, 'num', '60', -5, 10)
+        self.assertRaises(ValueError, q[10:].fromdoc, 'num', '60', -5, 10)
