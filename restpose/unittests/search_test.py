@@ -718,3 +718,7 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(q2[0].data['num'][0], 60)
         self.assertRaises(ValueError, q[:10].fromdoc, 'num', '60', -5, 10)
         self.assertRaises(ValueError, q[10:].fromdoc, 'num', '60', -5, 10)
+        self.assertRaises(RequestFailed,
+                          q.fromdoc('num', '110', -5, 10).__getitem__, 0)
+        self.assertRaises(RequestFailed,
+                          q.fromdoc('num', '2000', -5, 10).__getitem__, 0)
