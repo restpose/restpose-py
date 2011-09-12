@@ -199,7 +199,7 @@ simple example:
     >>> print len(search)
     1
     >>> search[0].data
-    {'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']}
+    {u'text': [u'Hello world'], u'tag': [u'A tag'], u'type': [u'blurb'], u'id': [u'1']}
 
 By convention, the word ``query`` is used in RestPose to refer to a set of
 operations which can be used to match and associate a weight with a set of
@@ -492,7 +492,7 @@ For example, suppose we have a query such as:
 To get the first result of a query:
 
 >>> print query[0]
-SearchResult(rank=0, data={'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']})
+SearchResult(rank=0, data={u'text': [u'Hello world'], u'tag': [u'A tag'], u'type': [u'blurb'], u'id': [u'1']})
 
 Suppose you want the top 10 results.  One approach would be to subscript the
 query with 0, 1, 2, etc.  This will actually be fairly efficient - the Python
@@ -504,7 +504,7 @@ all matching documents using the standard python iteration mechanism; the
 iterator will return SearchResult objects.
 
 >>> for r in query: print r
-SearchResult(rank=0, data={'text': ['Hello world'], 'tag': ['A tag'], 'type': ['blurb'], 'id': ['1']})
+SearchResult(rank=0, data={u'text': [u'Hello world'], u'tag': [u'A tag'], u'type': [u'blurb'], u'id': [u'1']})
 
 To get just the first 10 results of the query, you can slice the query; this
 returns a :class:`TerminalQuery <restpose.query.TerminalQuery>`, which has all
