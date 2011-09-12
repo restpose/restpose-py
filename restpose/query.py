@@ -695,6 +695,16 @@ class Query(Searchable):
         """
         return Xor(self, other, target=self._target)
 
+    if six.PY3:
+        __str__ = lambda x: x.__unicode__()
+    else:
+        __str__ = lambda x: unicode(x).encode('utf-8')
+
+    def __unicode__(self):
+        return six.u('<Query(%s)>') % (
+            self._build_search()
+        )
+
 
 class QueryField(Query):
     """A query in a particular field.
