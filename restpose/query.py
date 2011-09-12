@@ -977,8 +977,13 @@ class SearchResult(object):
         """
         self._object = object
 
-    def __str__(self):
-        return 'SearchResult(rank=%d, data=%s)' % (
+    if six.PY3:
+        __str__ = lambda x: x.__unicode__()
+    else:
+        __str__ = lambda x: unicode(x).encode('utf-8')
+
+    def __unicode__(self):
+        return six.u('SearchResult(rank=%d, data=%s)') % (
             self.rank, self.data,
         )
 
@@ -1106,19 +1111,24 @@ class SearchResults(object):
     def __getitem__(self, key):
         return self.items.__getitem__(key)
 
-    def __str__(self):
+    if six.PY3:
+        __str__ = lambda x: x.__unicode__()
+    else:
+        __str__ = lambda x: unicode(x).encode('utf-8')
+
+    def __unicode__(self):
         result = six.u('SearchResults(offset=%d, size_requested=%d, '
                        'check_at_least=%d, '
                        'matches_lower_bound=%d, '
                        'matches_estimated=%d, '
                        'matches_upper_bound=%d, '
-                       'items=[%s]' % (
+                       'items=[%s]') % (
             self.offset, self.size_requested, self.check_at_least,
             self.matches_lower_bound,
             self.matches_estimated,
             self.matches_upper_bound,
-            six.u(', '.join(str(item) for item in self.items)),
-        ))
+            ', '.join(str(item) for item in self.items),
+        )
         if self.info:
             result += six.u(', info=%s' % str(self.info))
         return result + six.u(')')
