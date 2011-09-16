@@ -311,7 +311,7 @@ class SearchTest(RestPoseTestCase):
 
     def test_calc_cooccur(self):
         q = self.coll.doc_type("blurb").all()
-        results = self.coll.doc_type("blurb").search(q.calc_cooccur('t'))
+        results = self.coll.doc_type("blurb").search(q.calc_cooccur('t', ''))
         self.assertEqual(self.coll.status.get('doc_count'), 1)
         self.check_results(results, check_at_least=1,
                            items=self.expected_items_single,
@@ -319,29 +319,32 @@ class SearchTest(RestPoseTestCase):
                                'counts': [['hello', 'world', 1]],
                                'docs_seen': 1,
                                'terms_seen': 2,
-                               'prefix': 't',
+                               'group': 't',
+                               'prefix': '',
                                'type': 'cooccur'
                            }])
-        self.assertEqual(q.calc_cooccur('t').info,
+        self.assertEqual(q.calc_cooccur('t', '').info,
                          [{
                              'counts': [['hello', 'world', 1]],
                              'docs_seen': 1,
                              'terms_seen': 2,
-                             'prefix': 't',
+                             'group': 't',
+                             'prefix': '',
                              'type': 'cooccur'
                          }])
 
     def test_calc_occur(self):
         q = self.coll.doc_type("blurb").all()
-        results = self.coll.doc_type("blurb").search(q.calc_occur('t'))
+        results = self.coll.doc_type("blurb").search(q.calc_occur('t', ''))
         self.assertEqual(self.coll.status.get('doc_count'), 1)
         self.check_results(results, check_at_least=1,
                            items=self.expected_items_single,
                            info=[{
                                'counts': [['hello', 1], ['world', 1]],
                                'docs_seen': 1,
+                               'group': 't',
                                'terms_seen': 2,
-                               'prefix': 't',
+                               'prefix': '',
                                'type': 'occur'
                            }])
 
@@ -450,10 +453,10 @@ class SearchTest(RestPoseTestCase):
 
         self.assertEqual(empty_type.search(empty_query[7:18]
                                            .check_at_least(3)
-                                           .calc_cooccur('t'))._raw,
+                                           .calc_cooccur('', ''))._raw,
                          missing_type.search(missing_query[7:18]
                                              .check_at_least(3)
-                                             .calc_cooccur('t'))._raw)
+                                             .calc_cooccur('', ''))._raw)
 
     def test_query_subscript(self):
         """Test subscript on a query.

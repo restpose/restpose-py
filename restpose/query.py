@@ -463,7 +463,7 @@ class Searchable(object):
         self._ensure_results_stats()
         return self._results.info
 
-    def calc_occur(self, prefix, doc_limit=None, result_limit=None,
+    def calc_occur(self, group, prefix, doc_limit=None, result_limit=None,
                    get_termfreqs=False, stopwords=[]):
         """Get occurrence counts of terms in the matching documents.
 
@@ -474,17 +474,24 @@ class Searchable(object):
         [suffix, occurrence count] or [suffix, occurrence count, termfreq] if
         get_termfreqs was true.
 
+        :param group: group to check for terms in.
         :param prefix: prefix of terms to check occurrence for
         :param doc_limit: number of matching documents to stop checking after.  None=unlimited.  Integer or None.  Default=None
         :param result_limit: number of terms to return results for.  None=unlimited.  Integer or None. Default=None
         :param get_termfreqs: set to true to also get frequencies of terms in the db.  Boolean.  Default=False
         :param stopwords: list of stopwords - term suffixes to ignore.  Array of strings.  Default=[]
 
+        Note; if group is specified as an empty string, this can be used to
+        count occurrences of terms in all fields.  In this case, terms will be
+        represented by the group name, followed by a tab, followed by the
+        normal term.
+
         """
         result = TerminalQuery(self)
         if result._info is None:
             result._info = []
-        result._info.append({'occur': dict(prefix=prefix,
+        result._info.append({'occur': dict(group=group,
+                                           prefix=prefix,
                                            doc_limit=doc_limit,
                                            result_limit=result_limit,
                                            get_termfreqs=get_termfreqs,
@@ -492,7 +499,7 @@ class Searchable(object):
                                           )})
         return result
 
-    def calc_cooccur(self, prefix, doc_limit=None, result_limit=None,
+    def calc_cooccur(self, group, prefix, doc_limit=None, result_limit=None,
                      get_termfreqs=False, stopwords=[]):
         """Get cooccurrence counts of terms in the matching documents.
 
@@ -505,17 +512,24 @@ class Searchable(object):
         co-occurrence count, termfreq of suffix1, termfreq of suffix2] if
         get_termfreqs was true.
 
+        :param group: group to check for terms in.
         :param prefix: prefix of terms to check co-occurrence for
         :param doc_limit: number of matching documents to stop checking after.  None=unlimited.  Integer or None.  Default=None
         :param result_limit: number of terms to return results for.  None=unlimited.  Integer or None. Default=None
         :param get_termfreqs: set to true to also get frequencies of terms in the db.  Boolean.  Default=False
         :param stopwords: list of stopwords - term suffixes to ignore.  Array of strings.  Default=[]
 
+        Note; if group is specified as an empty string, this can be used to
+        count occurrences of terms in all fields.  In this case, terms will be
+        represented by the group name, followed by a tab, followed by the
+        normal term.
+
         """
         result = TerminalQuery(self)
         if result._info is None:
             result._info = []
-        result._info.append({'cooccur': dict(prefix=prefix,
+        result._info.append({'cooccur': dict(group=group,
+                                             prefix=prefix,
                                              doc_limit=doc_limit,
                                              result_limit=result_limit,
                                              get_termfreqs=get_termfreqs,
