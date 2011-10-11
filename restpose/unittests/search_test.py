@@ -151,7 +151,10 @@ class SearchTest(RestPoseTestCase):
         self.assertEqual(gotdoc.values, {
             '0': '\\x05Etest'
                  '\\x04Fcat\\x06Fempty\\x04Ftag\\x05Ftest\\x05Ftext'
-                 '\\x06Mempty\\x04Ncat\\x04Ntag\\x05Ntest\\x05Ntext'
+                 '\\x06Mempty\\x04Ncat\\x04Ntag\\x05Ntest\\x05Ntext',
+            '1': '\\x05blurb',
+            '268435588': '\\x08greeting',
+            '268435592': '\\x05A tag',
         })
 
     def test_getdoc(self):
@@ -351,6 +354,22 @@ class SearchTest(RestPoseTestCase):
                                'prefix': '',
                                'type': 'occur'
                            }])
+
+    def test_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_occur('t', ''))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=1,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [['hello', 1], ['world', 1]],
+                               'docs_seen': 1,
+                               'group': 't',
+                               'terms_seen': 2,
+                               'prefix': '',
+                               'type': 'occur'
+                           }])
+
 
     def test_raw_query(self):
         results = self.coll.doc_type("blurb").search(dict(query=dict(matchall=True)))
@@ -571,6 +590,7 @@ class LargeSearchTest(RestPoseTestCase):
                                       '#\\tNnum': {},
                                       })
         self.assertEqual(gotdoc.values, { '0': '\\x04Fnum\\x04Nnum',
+                                          '1': '\\x03num',
                                           '268435599': '\\x02\\xb8\\xd0' })
 
         gotdoc = self.coll.get_doc("other", "17")
