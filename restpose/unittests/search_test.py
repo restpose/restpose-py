@@ -148,7 +148,11 @@ class SearchTest(RestPoseTestCase):
                                       't\\thello': {'positions': [1], 'wdf': 1},
                                       't\\tworld': {'positions': [2], 'wdf': 1},
                                       })
-        self.assertEqual(gotdoc.values, {})
+        self.assertEqual(gotdoc.values, {
+            '0': '\\x05Etest'
+                 '\\x04Fcat\\x06Fempty\\x04Ftag\\x05Ftest\\x05Ftext'
+                 '\\x06Mempty\\x04Ncat\\x04Ntag\\x05Ntest\\x05Ntext'
+        })
 
     def test_getdoc(self):
         """Test that getting bits of a document works.
@@ -566,7 +570,8 @@ class LargeSearchTest(RestPoseTestCase):
                                       '#\\tN': {},
                                       '#\\tNnum': {},
                                       })
-        self.assertEqual(gotdoc.values, { '268435599': '\\x02\\xb8\\xd0' })
+        self.assertEqual(gotdoc.values, { '0': '\\x04Fnum\\x04Nnum',
+                                          '268435599': '\\x02\\xb8\\xd0' })
 
         gotdoc = self.coll.get_doc("other", "17")
         self.assertEqual(gotdoc.data, {

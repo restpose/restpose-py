@@ -96,7 +96,9 @@ class CategoryTest(RestPoseTestCase):
                                       'c2\\tC2': {},
                                       'g\\tA tag': {},
                                       })
-        self.assertEqual(gotdoc.values, {})
+        self.assertEqual(gotdoc.values, {
+                         u'0': u'\\x04Fcat\\x05Fcat2\\x04Ftag\\x04Ncat\\x05Ncat2\\x04Ntag'
+        })
 
         # Test some category searches.
         r = coll.field.cat.equals("1")
@@ -146,7 +148,8 @@ class CategoryTest(RestPoseTestCase):
                                       'c2\\tC2': {},
                                       'g\\tA tag': {},
                                       })
-        self.assertEqual(gotdoc.values, {})
+        self.assertEqual(gotdoc.values, {'0': '\\x04Fcat\\x05Fcat2\\x04Ftag'
+                         '\\x04Ncat\\x05Ncat2\\x04Ntag'})
 
         # Add a document when categories exist
         target = coll.doc_type("test")
