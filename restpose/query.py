@@ -463,6 +463,32 @@ class Searchable(object):
         self._ensure_results_stats()
         return self._results.info
 
+    def calc_facet_count(self, field, doc_limit=None, result_limit=None):
+        """Get facet counts for the given field in the matching documents.
+
+        Causes the search results to contain counts for each facet value seen
+        in the field, in decreasing order of occurrence.  The count entries are
+        of the form: [value, occurrence count].
+
+        :param slotname: The name or number of the the slot to read.
+        :param doc_limit: number of matching documents to stop checking after.  None=unlimited.  Integer or None.  Default=None
+        :param result_limit: number of terms to return results for.  None=unlimited.  Integer or None. Default=None
+
+        Note; all types being searched which contain the field must have been
+        configured to store facet values in the same slot.  The default
+        configuration will guarantee this, but if custom configuration results
+        in this constraint not being satisfied, an error will be returned.
+
+        """
+        result = TerminalQuery(self)
+        if result._info is None:
+            result._info = []
+        result._info.append({'facet_count': dict(field=field,
+                                                 doc_limit=doc_limit,
+                                                 result_limit=result_limit,
+                                                )})
+        return result
+
     def calc_occur(self, group, prefix, doc_limit=None, result_limit=None,
                    get_termfreqs=False, stopwords=[]):
         """Get occurrence counts of terms in the matching documents.

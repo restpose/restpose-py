@@ -355,21 +355,47 @@ class SearchTest(RestPoseTestCase):
                                'type': 'occur'
                            }])
 
-    def test_facet_count(self):
+    def test_tag_facet_count(self):
         q = self.coll.doc_type("blurb").all()
-        results = self.coll.doc_type("blurb").search(q.calc_occur('t', ''))
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('tag'))
         self.assertEqual(self.coll.status.get('doc_count'), 1)
         self.check_results(results, check_at_least=1,
                            items=self.expected_items_single,
                            info=[{
-                               'counts': [['hello', 1], ['world', 1]],
+                               'counts': [['A tag', 1]],
                                'docs_seen': 1,
-                               'group': 't',
-                               'terms_seen': 2,
-                               'prefix': '',
-                               'type': 'occur'
+                               'fieldname': 'tag',
+                               'type': 'facet_count',
+                               'values_seen': 1,
                            }])
 
+    def test_cat_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('cat'))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=1,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [['greeting', 1]],
+                               'docs_seen': 1,
+                               'fieldname': 'cat',
+                               'type': 'facet_count',
+                               'values_seen': 1,
+                           }])
+
+    def test_type_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('type'))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=1,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [['blurb', 1]],
+                               'docs_seen': 1,
+                               'fieldname': 'type',
+                               'type': 'facet_count',
+                               'values_seen': 1,
+                           }])
 
     def test_raw_query(self):
         results = self.coll.doc_type("blurb").search(dict(query=dict(matchall=True)))
