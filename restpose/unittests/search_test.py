@@ -397,6 +397,52 @@ class SearchTest(RestPoseTestCase):
                                'values_seen': 1,
                            }])
 
+    def test_text_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('text'))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=0,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [],
+                               'docs_seen': 0, # Count of 0 because no stored
+                                               # facets for text fields
+                               'fieldname': 'text',
+                               'type': 'facet_count',
+                               'values_seen': 0,
+                           }])
+
+
+    def test_empty_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('empty'))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=0,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [],
+                               'docs_seen': 0, # Count of 0 because this is a
+                                               # text field.
+                               'fieldname': 'empty',
+                               'type': 'facet_count',
+                               'values_seen': 0,
+                           }])
+
+    def test_missing_facet_count(self):
+        q = self.coll.doc_type("blurb").all()
+        results = self.coll.doc_type("blurb").search(q.calc_facet_count('missing'))
+        self.assertEqual(self.coll.status.get('doc_count'), 1)
+        self.check_results(results, check_at_least=0,
+                           items=self.expected_items_single,
+                           info=[{
+                               'counts': [],
+                               'docs_seen': 0, # Count of 0 because no field
+                                               # configuration for this field.
+                               'fieldname': 'missing',
+                               'type': 'facet_count',
+                               'values_seen': 0,
+                           }])
+
     def test_raw_query(self):
         results = self.coll.doc_type("blurb").search(dict(query=dict(matchall=True)))
 
