@@ -299,6 +299,37 @@ class FieldQuerySource(object):
         return QueryField(self.fieldname, 'range', (begin, end),
                           target=self.target)
 
+    def distscore(self, center, max_range=None):
+        """Create a query for geospatial field values based on distance.
+
+        Matches documents in which one of the stored values in the field is
+        within the specified range of the center point (in meters on the
+        surface of the earth).
+
+        This type is currently available only for "lonlat" field types.
+
+        :param center: The center for the query.  Either a (lon, lat) tuple, or
+                       an object with "lon" and "lat" properties; in either
+                       case, the longitude and latitude must be stored as
+                       numbers.
+        :param max_range: The maximum range (in meters) of documents to return;
+                       if None, returns documents with no maximum range.  
+
+        :example:
+
+            Search for documents in which the "num" field has a value in the
+            range 0 to 10 (including the endpoints).
+
+            >>> query = coll.field.latlon.distscore([0.0, 0.0], 1609.344)
+
+        """
+        params = dict(center = center)
+        if max_range is not None:
+            params['max_range'] = max_range
+        return QueryField(self.fieldname, 'distscore', params,
+                          target=self.target)
+
+
     def text(self, text, op="phrase", window=None):
         """Create a query for a piece of text in the field.
 
