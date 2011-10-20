@@ -722,6 +722,49 @@ class LargeSearchTest(RestPoseTestCase):
         self.assertEqual(q1[242].data['num'], [0])
         self.assertRaises(IndexError, q1.__getitem__, 243)
 
+        # Test using multiple keys
+        q1 = q.order_by_multiple([['num', False]]) 
+        self.assertEqual(q1[0].data, self.make_doc(192))
+        self.assertEqual(q1[1].data, self.make_doc(191))
+        self.assertEqual(q1[242].data['num'], [0])
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+
+        q1 = q.order_by_multiple([['num', True]]) 
+        self.assertEqual(q1[0].data['num'], [0])
+        self.assertEqual(q1[1].data['num'], [0])
+        self.assertEqual(q1[242].data, self.make_doc(192))
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+
+        q1 = q.order_by_multiple([['type', False], ['num', True]]) 
+        self.assertEqual(q1[0].data['type'], ['other'])
+        self.assertEqual(q1[0].data['num'], [0])
+        self.assertEqual(q1[1].data['type'], ['other'])
+        self.assertEqual(q1[1].data['num'], [1])
+        self.assertEqual(q1[49].data['type'], ['other'])
+        self.assertEqual(q1[49].data['num'], [49])
+        self.assertEqual(q1[50].data['type'], ['num'])
+        self.assertEqual(q1[50].data['num'], [0])
+        self.assertEqual(q1[242].data, self.make_doc(192))
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+
+        q1 = q.order_by_multiple([['type', True], ['num', True]]) 
+        self.assertEqual(q1[0].data, self.make_doc(0))
+        self.assertEqual(q1[1].data, self.make_doc(1))
+        self.assertEqual(q1[192].data, self.make_doc(192))
+        self.assertEqual(q1[193].data['type'], ['other'])
+        self.assertEqual(q1[193].data['num'], [0])
+        self.assertEqual(q1[242].data['type'], ['other'])
+        self.assertEqual(q1[242].data['num'], [49])
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+
+        q1 = q.order_by_multiple([['num', True], ['type', True]]) 
+        self.assertEqual(q1[0].data, self.make_doc(0))
+        self.assertEqual(q1[1].data['type'], ['other'])
+        self.assertEqual(q1[1].data['num'], [0])
+        self.assertEqual(q1[2].data, self.make_doc(1))
+        self.assertEqual(q1[242].data, self.make_doc(192))
+        self.assertRaises(IndexError, q1.__getitem__, 243)
+
     def test_query_all(self):
         q = self.coll.doc_type("num").all().order_by('num')
 

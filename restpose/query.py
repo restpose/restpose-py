@@ -437,6 +437,20 @@ class Searchable(object):
     def order_by(self, field, ascending=None):
         """Set the sort order.
 
+        :param field: The name of a field, or self.RELEVANCE.
+        :param ascending: True if the sort order should be ascending (ie,
+               smallest values of the field get the highest weight).  If not
+               supplied, this will default to True when sorting by a field, and
+               False for RELEVANCE.
+
+        This may be called multiple times to order by multiple keys.
+        Alternatively, the order_by_multiple method may be used to do this.
+
+        In detail: if this is called when a sort order has already been set,
+        the previous sort order will be applied before the new one (ie, any
+        items which compare equal in the new order will be returned in the
+        order determined by the previously set sort order).
+
         """
         order_item = {}
         if field is self.RELEVANCE:
@@ -452,7 +466,27 @@ class Searchable(object):
             order_item['ascending'] = ascending
 
         result = TerminalQuery(self)
-        result._order_by = [order_item]
+        if result._order_by is None:
+            result._order_by = []
+        result._order_by.append(order_item)
+        print result._order_by
+        return result
+
+    def order_by_multiple(self, orderings):
+        """Set the sort order, using multiple keys.
+
+        :param orderings: A sequence of ordering parameters, as supplied to the
+               order_by() method, in order of most significant first.
+
+        Any existing sort order is removed.
+
+        """
+        result = self
+        if result._order_by is not None:
+            result = TerminalQuery(result)
+            result._order_by = None
+        for order_item in orderings:
+            result = result.order_by(*order_item)
         return result
 
     @property
