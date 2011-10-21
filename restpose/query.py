@@ -469,7 +469,6 @@ class Searchable(object):
         if result._order_by is None:
             result._order_by = []
         result._order_by.append(order_item)
-        print result._order_by
         return result
 
     def order_by_multiple(self, orderings):
