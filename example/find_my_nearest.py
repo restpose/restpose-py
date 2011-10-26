@@ -251,7 +251,10 @@ def do_cmd(cmd, args):
             </form></body></html>
             '''
 
-        app.run()
+        if app.debug:
+            app.run()
+        else:
+            app.run(host='0.0.0.0')
 
     else:
         print "Unknown command"
