@@ -870,7 +870,7 @@ class CheckPoint(object):
             time.sleep(1)
 
 class Taxonomy(object):
-    """A taxnonmy; a hierarchy of category relationships.
+    """A taxonomy; a hierarchy of category relationships.
 
     A collection may have many taxonomies, each identified by a name.  Each
     taxonomy contains a set of categories, and a tree of parent-child
