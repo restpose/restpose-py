@@ -14,7 +14,7 @@ setup(name="Restpose",
       zip_safe=False,
       platforms='any',
       license='MIT',
-      url='https://github.com/rboulton/restpose-py',
+      url='https://github.com/restpose/restpose-py',
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
