@@ -7,7 +7,7 @@
 """
 import six
 #: The development release suffix.  Will be an empty string for releases.
-dev_release = "dev"
+dev_release = ""
 
 #: The version of this restpose client, as a tuple of numbers.
 #: This does not include information about whether this is a development
